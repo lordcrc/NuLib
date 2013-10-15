@@ -23,6 +23,20 @@ uses
   NuContainers.Detail.OpenAddressingSeparate;
 
 type
+  Pair<T1, T2> = record
+    Value1: T1;
+    Value2: T2;
+
+    constructor Create(const V1: T1; const V2: T2);
+
+    property Key: T1 read value1 write value1;
+    property Value: T2 read value2 write value2;
+
+    property First: T1 read value1 write value1;
+    property Second: T2 read value2 write value2;
+  end;
+
+
   Dictionary<K, V> = record
   private
     type
@@ -53,6 +67,14 @@ type
   end;
 
 implementation
+
+{ Pair<T1, T2> }
+
+constructor Pair<T1, T2>.Create(const V1: T1; const V2: T2);
+begin
+  Value1 := V1;
+  Value2 := V2;
+end;
 
 { Dictionary<K, V> }
 
