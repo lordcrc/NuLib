@@ -69,70 +69,10 @@ type
     property Contains[const Key: K]: Boolean read GetContains;
   end;
 
-function MurmurFinalize(const hash: UInt32): UInt32; inline;
-
-// returns 0 if v is 0 or result > 2^31
-function NextPow2(v: UInt32): UInt64; inline;
-
-// works for v <= 2^32
-function LargestPrimeLessThan(v: UInt64; out PrimitiveRoot: UInt32): UInt32;
-
-procedure SwapData(var v1, v2; Size: UInt32); inline;
-
-procedure IntRefToMethPtr(const IntRef; var MethPtr; MethNo: Integer);
-
 implementation
 
 uses
   System.SysUtils;
-
-function MurmurFinalize(const hash: UInt32): UInt32;
-begin
-  result := hash;
-  result := result xor (result shr 16);
-  result := result * $85ebca6b;
-  result := result xor (result shr 13);
-  result := result * $c2b2ae35;
-  result := result xor (result shr 16);
-end;
-
-function NextPow2(v: UInt32): UInt64;
-begin
-  v := v or (v shr 1);
-  v := v or (v shr 2);
-  v := v or (v shr 4);
-  v := v or (v shr 8);
-  v := v or (v shr 16);
-  result := v;
-  result := result + 1;
-end;
-
-const
-  PrimeList: array[0..30] of UInt32 = (
-  3, 7, 13, 31, 61, 127, 251, 509, 1021, 2039, 4093, 8191, 16381, 32749, 65521,
-  131071, 262139, 524287, 1048573, 2097143, 4194301, 8388593, 16777213,
-  33554393, 67108859, 134217689, 268435399, 536870909, 1073741789,
-  2147483647, 4294967291);
-  PrimitiveRootList: array[0..30] of UInt32 = (
-  2, 3, 2, 3, 2, 3, 6, 2, 10, 7, 2, 17, 2, 2, 17,
-  3, 2, 3, 2, 5, 7, 3, 5,
-  3, 2, 3, 3, 2, 2,
-  7, 2);
-
-function LargestPrimeLessThan(v: UInt64; out PrimitiveRoot: UInt32): UInt32;
-var
-  i: UInt32;
-begin
-  result := 0;
-  PrimitiveRoot := 0;
-  for i := 0 to High(PrimeList) do
-  begin
-    if PrimeList[i] > v  then
-      exit;
-    result := PrimeList[i];
-    PrimitiveRoot := PrimitiveRootList[i];
-  end;
-end;
 
 { Dictionary<K, V> }
 
@@ -416,33 +356,6 @@ begin
   end;
 
   AddItem(idx, Key, hash, Value);
-end;
-
-procedure SwapData(var v1, v2; Size: UInt32); inline;
-type
-  PData = ^UInt8;
-var
-  p1, p2, pt: PData;
-  tv: array[0..1023] of UInt8; // yeah ok...
-begin
-  p1 := PData(@v1);
-  p2 := PData(@v2);
-  pt := PData(@tv);
-
-  Move(p1^, pt^, Size);
-  Move(p2^, p1^, Size);
-  Move(pt^, p2^, Size);
-end;
-
-procedure IntRefToMethPtr(const IntRef; var MethPtr; MethNo: Integer);
-type
-  TVtable = array[0..999] of Pointer;
-  PVtable = ^TVtable;
-  PPVtable = ^PVtable;
-begin
-  // QI=0, AddRef=1, Release=2, 3 = first user method
-  TMethod(MethPtr).Code := PPVtable(IntRef)^^[MethNo];
-  TMethod(MethPtr).Data := Pointer(IntRef);
 end;
 
 end.
