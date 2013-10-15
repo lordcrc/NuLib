@@ -48,7 +48,8 @@ type
     property Contains[const Key: K]: Boolean read GetContains;
 
     class function Create: Dictionary<K, V>; overload; static;
-    class function Create(const Comparer: NuContainers.Common.IEqualityComparer<K>): Dictionary<K, V>; overload; static;
+    class function Create(const Comparer: NuContainers.IEqualityComparer<K>): Dictionary<K, V>; overload; static;
+    class function Create(const Comparison: NuContainers.EqualityComparisonFunction<K>; const Hasher: NuContainers.HashFunction<K>): Dictionary<K, V>; overload; static;
   end;
 
 implementation
@@ -65,9 +66,15 @@ begin
   FDict.Clear;
 end;
 
-class function Dictionary<K, V>.Create(const Comparer: NuContainers.Common.IEqualityComparer<K>): Dictionary<K, V>;
+class function Dictionary<K, V>.Create(const Comparer: NuContainers.IEqualityComparer<K>): Dictionary<K, V>;
 begin
   result.FDict := TDictImpl.Create(Comparer);
+end;
+
+class function Dictionary<K, V>.Create(const Comparison: NuContainers.EqualityComparisonFunction<K>;
+  const Hasher: NuContainers.HashFunction<K>): Dictionary<K, V>;
+begin
+  result.FDict := TDictImpl.Create(NuContainers.Common.DelegatedEqualityComparer<K>.Create(Comparison, Hasher));
 end;
 
 function Dictionary<K, V>.GetContains(const Key: K): Boolean;
