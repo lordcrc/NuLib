@@ -9,7 +9,7 @@ type
   DictItemFlag = (difHasKey, difOccupied);
   DictItemFlags = set of DictItemFlag;
 
-  Dictionary<K, V> = class
+  Dictionary<K, V> = class(TInterfacedObject, IDictionaryImplementation<K, V>)
   public
     type
       DictItem = record
@@ -44,6 +44,9 @@ type
     // otherwise it returns false and Index contains an index to an available item for that Key
     function FindItem(const Key: K; const Hash: UInt32; out Index: UInt32): Boolean; overload;
 
+    function GetComparer: IEqualityComparer<K>;
+    function GetCount: UInt32;
+    function GetCapacity: UInt32;
     function GetItem(const Key: K): V;
     procedure SetItem(const Key: K; const Value: V);
     function GetLoad: double;
@@ -370,11 +373,26 @@ begin
   end;
 end;
 
+function Dictionary<K, V>.GetCapacity: UInt32;
+begin
+  result := FCapacity;
+end;
+
+function Dictionary<K, V>.GetComparer: IEqualityComparer<K>;
+begin
+  result := FComparer;
+end;
+
 function Dictionary<K, V>.GetContains(const Key: K): Boolean;
 var
   idx: UInt32;
 begin
   result := FindItem(Key, idx);
+end;
+
+function Dictionary<K, V>.GetCount: UInt32;
+begin
+  result := FCount;
 end;
 
 function Dictionary<K, V>.GetEmpty: Boolean;

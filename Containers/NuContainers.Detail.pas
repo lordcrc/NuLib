@@ -23,41 +23,30 @@ type
     class function Get: NuContainers.IEqualityComparer<T>; static;
   end;
 
-  LifeTime = interface
-  end;
+  IDictionaryImplementation<K, V> = interface
+    function GetComparer: IEqualityComparer<K>;
+    function GetEmpty: Boolean;
+    function GetCount: UInt32;
+    function GetCapacity: UInt32;
+    function GetItem(const Key: K): V;
+    function GetContains(const Key: K): Boolean;
 
-function NewLifeTime(const Obj: TObject): LifeTime;
+    procedure SetItem(const Key: K; const Value: V);
+
+    procedure Clear;
+    function Remove(const Key: K): Boolean;
+
+    procedure Reserve(const MinNewCapacity: UInt32);
+
+    property Comparer: IEqualityComparer<K> read GetComparer;
+    property Empty: Boolean read GetEmpty;
+    property Count: UInt32 read GetCount;
+    property Capacity: UInt32 read GetCapacity;
+    property Item[const Key: K]: V read GetItem write SetItem;
+    property Contains[const Key: K]: Boolean read GetContains;
+  end;
 
 implementation
-
-type
-  TLifeTime = class(TInterfacedObject, LifeTime)
-  private
-    FObj: TObject;
-  public
-    constructor Create(Obj: TObject);
-    destructor Destroy; override;
-  end;
-
-function NewLifeTime(const Obj: TObject): LifeTime;
-begin
-  result := TLifeTime.Create(Obj);
-end;
-
-{ TLifeTime }
-
-constructor TLifeTime.Create(Obj: TObject);
-begin
-  inherited Create;
-  FObj := Obj;
-end;
-
-destructor TLifeTime.Destroy;
-begin
-  FObj.Free;
-
-  inherited;
-end;
 
 { TEqualityComparerWrapper<T> }
 

@@ -29,8 +29,7 @@ type
 //      TDictImpl = NuContainers.Detail.OpenAddressingSeparate.Dictionary<K, V>;
       TDictImpl = NuContainers.Detail.OpenAddressingInline.Dictionary<K, V>;
   strict private
-    FDict: TDictImpl;
-    FLifetime: NuContainers.Detail.LifeTime;
+    FDict: NuContainers.Detail.IDictionaryImplementation<K,V>;
   private
     function GetCount: UInt32; inline;
     function GetItem(const Key: K): V; inline;
@@ -59,7 +58,6 @@ implementation
 class function Dictionary<K, V>.Create: Dictionary<K, V>;
 begin
   result.FDict := TDictImpl.Create(NuContainers.Detail.EqualityComparerInstance<K>.Get());
-  result.FLifeTime := NewLifeTime(result.FDict);
 end;
 
 procedure Dictionary<K, V>.Clear;
@@ -70,7 +68,6 @@ end;
 class function Dictionary<K, V>.Create(const Comparer: NuContainers.Common.IEqualityComparer<K>): Dictionary<K, V>;
 begin
   result.FDict := TDictImpl.Create(Comparer);
-  result.FLifeTime := NewLifeTime(result.FDict);
 end;
 
 function Dictionary<K, V>.GetContains(const Key: K): Boolean;
