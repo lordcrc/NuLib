@@ -9,6 +9,9 @@
 *.fsproj merge=union
 *.dbproj merge=union
 
+# Delphi
+*.dproj merge=union
+
 # Standard to msysgit
 *.doc	 diff=astextplain
 *.DOC	 diff=astextplain
