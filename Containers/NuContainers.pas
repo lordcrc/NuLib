@@ -1,0 +1,97 @@
+unit NuContainers;
+
+interface
+
+uses
+  NuContainers.Common,
+  NuContainers.Detail,
+  NuContainers.Detail.OpenAddressingInline,
+  NuContainers.Detail.OpenAddressingSeparate;
+
+type
+  Dictionary<K, V> = record
+  private
+    type
+//      TDictImpl = NuContainers.Detail.OpenAddressingSeparate.Dictionary<K, V>;
+      TDictImpl = NuContainers.Detail.OpenAddressingInline.Dictionary<K, V>;
+  strict private
+    FDict: TDictImpl;
+    FLifetime: NuContainers.Detail.LifeTime;
+  private
+    function GetCount: UInt32; inline;
+    function GetItem(const Key: K): V; inline;
+    procedure SetItem(const Key: K; const Value: V); inline;
+    function GetEmpty: Boolean;
+    function GetContains(const Key: K): Boolean;
+  public
+    procedure Clear;
+    function Remove(const Key: K): Boolean;
+
+    procedure Reserve(const MinNewCapacity: UInt32);
+
+    property Empty: Boolean read GetEmpty;
+    property Count: UInt32 read GetCount;
+    property Item[const Key: K]: V read GetItem write SetItem; default;
+    property Contains[const Key: K]: Boolean read GetContains;
+
+    class function Create: Dictionary<K, V>; overload; static;
+    class function Create(const Comparer: NuContainers.Common.IEqualityComparer<K>): Dictionary<K, V>; overload; static;
+  end;
+
+implementation
+
+{ Dictionary<K, V> }
+
+class function Dictionary<K, V>.Create: Dictionary<K, V>;
+begin
+  result.FDict := TDictImpl.Create(NuContainers.Detail.EqualityComparerInstance<K>.Get());
+  result.FLifeTime := NewLifeTime(result.FDict);
+end;
+
+procedure Dictionary<K, V>.Clear;
+begin
+  FDict.Clear;
+end;
+
+class function Dictionary<K, V>.Create(const Comparer: NuContainers.Common.IEqualityComparer<K>): Dictionary<K, V>;
+begin
+  result.FDict := TDictImpl.Create(Comparer);
+  result.FLifeTime := NewLifeTime(result.FDict);
+end;
+
+function Dictionary<K, V>.GetContains(const Key: K): Boolean;
+begin
+  result := FDict.Contains[Key];
+end;
+
+function Dictionary<K, V>.GetCount: UInt32;
+begin
+  result := FDict.Count;
+end;
+
+function Dictionary<K, V>.GetEmpty: Boolean;
+begin
+  result := FDict.Empty;
+end;
+
+function Dictionary<K, V>.GetItem(const Key: K): V;
+begin
+  result := FDict.Item[Key];
+end;
+
+function Dictionary<K, V>.Remove(const Key: K): Boolean;
+begin
+  result := FDict.Remove(Key);
+end;
+
+procedure Dictionary<K, V>.Reserve(const MinNewCapacity: UInt32);
+begin
+  FDict.Reserve(MinNewCapacity);
+end;
+
+procedure Dictionary<K, V>.SetItem(const Key: K; const Value: V);
+begin
+  FDict.Item[Key] := Value;
+end;
+
+end.
