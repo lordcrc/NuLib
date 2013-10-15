@@ -117,10 +117,8 @@ const
   33554393, 67108859, 134217689, 268435399, 536870909, 1073741789,
   2147483647, 4294967291);
   PrimitiveRootList: array[0..30] of UInt32 = (
-//  2, 3, 2, 3, 2, 3, 6, 2, 10, 7, 2, 17, 2, 2, 17,
-//  3, 2, 3, 2, 5, 7, 3, 5,
-//  3, 2, 3, 3, 2, 2,
-//  7, 2);
+  // list containing a primitive root for each prime number in PrimeList
+  // these are randomly picked for now, any primitive root should do in theory...
   2, // 3
   3, // 7
   6, // 13
@@ -299,7 +297,7 @@ var
   item: PDictItem;
   h, h1: UInt32;
   h2: UInt64; // ai*h2 needs to be 64 bit
-  pr, ai, a, i: UInt32;
+  pr, ak, a, i: UInt32;
   emptyIndex: UInt32;
   keyEqual, foundEmpty: boolean;
 begin
@@ -310,7 +308,7 @@ begin
   h1 := Hash mod Capacity;
   h2 := (Hash mod (Capacity - 2)) + 1; // ensure h2 is never zero
   pr := FPrimitiveRoot; // pr is guaranteed to be < M
-  ai := 1;
+  ak := 1;
   Index := 0;
   emptyIndex := 0;
   foundEmpty := false;
@@ -356,20 +354,37 @@ begin
     // this means the item was not the one we wanted
 
     // exponential probing
-    // Hash + pr^k * h2 = h mod M
-    // pr^k * h2 can become larger than 32 bit quickly
-    // which breaks the full sequence guarantee
-    // so rewrite
-    //   Hash = Hash mod M = x mod M
-    //   pr^k = pr^k mod M = y mod M
-    //     h2 = h2 mod M = z mod M
+    // based on Improved Exponential Hashing
+    // by Wenbin Luo, Gregory L. Heileman
+    // http://dx.doi.org/10.1587/elex.1.150
     //
-    // Hash + pr^k * h2 = (x + y * z) mod M
-    // so we let h = (x + y * z) mod M
-    // with (y * z) being 64bit to avoid overflow
+    // h_k = h1 + a^k * h2 mod M
+    //
+    // where
+    //    h1 = Hash
+    //    a = pr
+    //    M = Capacity
+    //    a^0 = 0
+    //
+    // if a is a primitive root of M then this will
+    // generate the full sequence
+    //
+    // a^k * h2 can overflow 32 bits quickly
+    // which breaks the full sequence guarantee
+    //
+    // so rewrite
+    //   h1 => h1 mod M = x mod M
+    //   a^k => (a^(k-1) * a) mod M = y mod M
+    //   h2 => h2 mod M = z mod M
+    //
+    // and we get
+    //   h1 + a^k * h2 = (x + y * z) mod M
+    // so we let
+    //   h_k = (x + y * z) mod M
+    // with y being 64bit to prevent overflow
 
-    ai := (ai * pr) mod Capacity;
-    h := (h1 + ai * h2) mod Capacity;
+    ak := (ak * pr) mod Capacity;
+    h := (h1 + ak * h2) mod Capacity;
   end;
 end;
 
