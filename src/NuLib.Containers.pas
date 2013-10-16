@@ -12,15 +12,15 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-unit NuContainers;
+unit NuLib.Containers;
 
 interface
 
 uses
-  NuContainers.Common,
-  NuContainers.Detail,
-  NuContainers.Detail.OpenAddressingInline,
-  NuContainers.Detail.OpenAddressingSeparate;
+  NuLib.Containers.Common,
+  NuLib.Containers.Detail,
+  NuLib.Containers.Detail.OpenAddressingInline,
+  NuLib.Containers.Detail.OpenAddressingSeparate;
 
 type
   Pair<T1, T2> = record
@@ -40,10 +40,10 @@ type
   Dictionary<K, V> = record
   private
     type
-//      TDictImpl = NuContainers.Detail.OpenAddressingSeparate.Dictionary<K, V>;
-      TDictImpl = NuContainers.Detail.OpenAddressingInline.Dictionary<K, V>;
+//      TDictImpl = NuLib.Containers.Detail.OpenAddressingSeparate.Dictionary<K, V>;
+      TDictImpl = NuLib.Containers.Detail.OpenAddressingInline.Dictionary<K, V>;
   strict private
-    FDict: NuContainers.Detail.IDictionaryImplementation<K,V>;
+    FDict: NuLib.Containers.Detail.IDictionaryImplementation<K,V>;
   private
     function GetCount: UInt32; inline;
     function GetItem(const Key: K): V; inline;
@@ -62,8 +62,8 @@ type
     property Contains[const Key: K]: Boolean read GetContains;
 
     class function Create: Dictionary<K, V>; overload; static;
-    class function Create(const Comparer: NuContainers.IEqualityComparer<K>): Dictionary<K, V>; overload; static;
-    class function Create(const Comparison: NuContainers.EqualityComparisonFunction<K>; const Hasher: NuContainers.HashFunction<K>): Dictionary<K, V>; overload; static;
+    class function Create(const Comparer: NuLib.IEqualityComparer<K>): Dictionary<K, V>; overload; static;
+    class function Create(const Comparison: NuLib.EqualityComparisonFunction<K>; const Hasher: NuLib.HashFunction<K>): Dictionary<K, V>; overload; static;
   end;
 
 implementation
@@ -80,7 +80,7 @@ end;
 
 class function Dictionary<K, V>.Create: Dictionary<K, V>;
 begin
-  result.FDict := TDictImpl.Create(NuContainers.Detail.EqualityComparerInstance<K>.Get());
+  result.FDict := TDictImpl.Create(NuLib.Containers.Detail.EqualityComparerInstance<K>.Get());
 end;
 
 procedure Dictionary<K, V>.Clear;
@@ -88,15 +88,15 @@ begin
   FDict.Clear;
 end;
 
-class function Dictionary<K, V>.Create(const Comparer: NuContainers.IEqualityComparer<K>): Dictionary<K, V>;
+class function Dictionary<K, V>.Create(const Comparer: NuLib.IEqualityComparer<K>): Dictionary<K, V>;
 begin
   result.FDict := TDictImpl.Create(Comparer);
 end;
 
-class function Dictionary<K, V>.Create(const Comparison: NuContainers.EqualityComparisonFunction<K>;
-  const Hasher: NuContainers.HashFunction<K>): Dictionary<K, V>;
+class function Dictionary<K, V>.Create(const Comparison: NuLib.EqualityComparisonFunction<K>;
+  const Hasher: NuLib.HashFunction<K>): Dictionary<K, V>;
 begin
-  result.FDict := TDictImpl.Create(NuContainers.Common.DelegatedEqualityComparer<K>.Create(Comparison, Hasher));
+  result.FDict := TDictImpl.Create(NuLib.Containers.Common.DelegatedEqualityComparer<K>.Create(Comparison, Hasher));
 end;
 
 function Dictionary<K, V>.GetContains(const Key: K): Boolean;

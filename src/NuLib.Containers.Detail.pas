@@ -1,12 +1,12 @@
-unit NuContainers.Detail;
+unit NuLib.Containers.Detail;
 
 interface
 
 uses
-  Generics.Defaults, NuContainers.Common;
+  Generics.Defaults, NuLib.Containers.Common;
 
 type
-  TEqualityComparerWrapper<T> = class(TInterfacedObject, NuContainers.IEqualityComparer<T>)
+  TEqualityComparerWrapper<T> = class(TInterfacedObject, NuLib.Containers.IEqualityComparer<T>)
   private
     FEq: Generics.Defaults.IEqualityComparer<T>;
   public
@@ -20,7 +20,7 @@ type
   end;
 
   EqualityComparerInstance<T> = record
-    class function Get: NuContainers.IEqualityComparer<T>; static;
+    class function Get: NuLib.Containers.IEqualityComparer<T>; static;
   end;
 
   IDictionaryImplementation<K, V> = interface

@@ -3,7 +3,7 @@
         <ProjectGuid>{F4195462-293A-4521-9133-51BBA30A757A}</ProjectGuid>
         <ProjectVersion>14.4</ProjectVersion>
         <FrameworkType>None</FrameworkType>
-        <MainSource>NuContainerTest.dpr</MainSource>
+        <MainSource>NuLibContainerTest.dpr</MainSource>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Release</Config>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
@@ -39,6 +39,12 @@
         <Cfg_1>true</Cfg_1>
         <Base>true</Base>
     </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win64' and '$(Cfg_1)'=='true') or '$(Cfg_1_Win64)'!=''">
+        <Cfg_1_Win64>true</Cfg_1_Win64>
+        <CfgParent>Cfg_1</CfgParent>
+        <Cfg_1>true</Cfg_1>
+        <Base>true</Base>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Release' or '$(Cfg_2)'!=''">
         <Cfg_2>true</Cfg_2>
         <CfgParent>Base</CfgParent>
@@ -56,13 +62,20 @@
         <Cfg_2>true</Cfg_2>
         <Base>true</Base>
     </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win64' and '$(Cfg_2)'=='true') or '$(Cfg_2_Win64)'!=''">
+        <Cfg_2_Win64>true</Cfg_2_Win64>
+        <CfgParent>Cfg_2</CfgParent>
+        <Cfg_2>true</Cfg_2>
+        <Base>true</Base>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
+        <DCC_UnitSearchPath>..\src\;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <Manifest_File>None</Manifest_File>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <VerInfo_Locale>1044</VerInfo_Locale>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
         <DCC_DcuOutput>.\dcu\$(Platform)\$(Config)</DCC_DcuOutput>
-        <DCC_ExeOutput>.</DCC_ExeOutput>
+        <DCC_ExeOutput>.\bin\</DCC_ExeOutput>
         <DCC_E>false</DCC_E>
         <DCC_N>false</DCC_N>
         <DCC_S>false</DCC_S>
@@ -79,7 +92,6 @@
         <VerInfo_Locale>1033</VerInfo_Locale>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64)'!=''">
-        <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_UsePackage>dxDBXServerModeRS17;cxTreeListdxBarPopupMenuRS17;SMIMEBBoxD17;DBXSqliteDriver;PKISSHBBoxD17;dxCoreRS17;dxThemeRS17;cxPageControldxBarPopupMenuRS17;fmx;IndySystem;TeeDB;vclib;DBXInterBaseDriver;DataSnapClient;DataSnapCommon;DataSnapServer;XMLBBoxD17;officeXPrt;DataSnapProviderClient;DBXSybaseASEDriver;dxRibbonRS17;DbxCommonDriver;XMLBBoxSecD17;vclimg;cxBarEditItemRS17;cxDataRS17;dbxcds;SSHBBoxCliD17;DatasnapConnectorsFreePascal;MetropolisUILiveTile;vclshlctrls;cxSchedulerRS17;dxSkinsdxBarPainterRS17;vcldb;cxExportRS17;adxBuildD17;vcldsnap;dxBarExtItemsRS17;dxGDIPlusRS17;DBXDb2Driver;BaseBBoxD17;dxNavBarRS17;DBXOracleDriver;CustomIPTransport;SSHBBoxSrvD17;cxLibraryRS17;vclribbon;cxGridRS17;dsnap;IndyIPServer;fmxase;vcl;IndyCore;IndyIPCommon;CloudService;DBXMSSQLDriver;FmxTeeUI;PGPSSHBBoxD17;dcldxSkinsCoreRS17;dxSkinsdxDLPainterRS17;inetdbxpress;webdsnap;HTTPBBoxCliD17;CloudBBoxD17;PDFBBoxD17;adortl;dxSkinscxSchedulerPainterRS17;EDIBBoxD17;bindcompfmx;PGPBBoxD17;cxSchedulerGridRS17;rtl;dbrtl;DbxClientDriver;dxTabbedMDIRS17;bindcomp;inetdb;FTPSBBoxCliD17;dxComnRS17;dxBarRS17;dxSkinsCoreRS17;Tee;DBXOdbcDriver;dxBarDBNavRS17;xmlrtl;ibxpress;Hydra_Core_D17;PKIBBoxD17;dxSkinsdxRibbonPainterRS17;IndyProtocols;DBXMySQLDriver;dxDockingRS17;dxLayoutControlRS17;vclactnband;bindengine;soaprtl;bindcompdbx;FMXTee;TeeUI;bindcompvcl;dxADOServerModeRS17;dxBarExtDBItemsRS17;vclie;ZIPBBoxD17;cxPageControlRS17;vcltouch;dxSkinscxPCPainterRS17;websnap;MIMEBBoxD17;SSLBBoxCliIndy10D17;VclSmp;SSLBBoxCliD17;DBXInformixDriver;dxmdsRS17;cxSchedulerTreeBrowserRS17;Intraweb;DataSnapConnectors;SFTPBBoxSrvD17;OfficeBBoxD17;dsnapcon;DBXFirebirdDriver;inet;fmxobj;cxTreeListRS17;vclx;DBXSybaseASADriver;Hydra_VCL_D17;fmxdae;SSLBBoxSrvIndy10D17;SFTPBBoxCliD17;dxSkinsdxNavBarPainterRS17;dbexpress;DataSnapIndy10ServerTransport;SSLBBoxSrvD17;IndyIPClient;$(DCC_UsePackage)</DCC_UsePackage>
     </PropertyGroup>
@@ -95,6 +107,9 @@
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_RemoteDebug>false</DCC_RemoteDebug>
     </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
+        <VerInfo_Locale>1033</VerInfo_Locale>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_DebugInfoInTds>true</DCC_DebugInfoInTds>
         <DCC_MapFile>3</DCC_MapFile>
@@ -104,23 +119,24 @@
         <Icns_MainIcns>$(BDS)\bin\delphi_PROJECTICNS.icns</Icns_MainIcns>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
-        <DCC_DcuOutput>.\dcu\$(Platform)\$(Config)</DCC_DcuOutput>
-        <DCC_ExeOutput>.</DCC_ExeOutput>
         <DCC_MapFile>3</DCC_MapFile>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
         <DCC_DebugInformation>true</DCC_DebugInformation>
     </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
+        <VerInfo_Locale>1033</VerInfo_Locale>
+    </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="NuContainers.pas"/>
-        <DCCReference Include="NuContainers.Common.pas"/>
-        <DCCReference Include="NuContainers.Detail.pas"/>
-        <DCCReference Include="NuContainers.Test.pas"/>
-        <DCCReference Include="NuContainers.Detail.OpenAddressingInline.pas"/>
-        <DCCReference Include="NuContainers.Detail.OpenAddressingSeparate.pas"/>
+        <DCCReference Include="..\src\NuLib.Containers.Common.pas"/>
+        <DCCReference Include="..\src\NuLib.Containers.Detail.OpenAddressingInline.pas"/>
+        <DCCReference Include="..\src\NuLib.Containers.Detail.OpenAddressingSeparate.pas"/>
+        <DCCReference Include="..\src\NuLib.Containers.Detail.pas"/>
+        <DCCReference Include="..\src\NuLib.Containers.pas"/>
+        <DCCReference Include="NuLib.Containers.Test.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -139,7 +155,7 @@
         <BorlandProject>
             <Delphi.Personality>
                 <Source>
-                    <Source Name="MainSource">NuContainerTest.dpr</Source>
+                    <Source Name="MainSource">NuLibContainerTest.dpr</Source>
                 </Source>
                 <VersionInfo>
                     <VersionInfo Name="IncludeVerInfo">False</VersionInfo>
@@ -177,7 +193,8 @@
                     <VersionInfoKeys Name="CFBundleExecutable"/>
                 </VersionInfoKeys>
                 <Excluded_Packages>
-                    <Excluded_Packages Name="P:\UtvD7\Win\Packages\Add-In Express\Packages\DelphiXE3\adxolWizardD17.bpl">Add-in Express Extensions VCL design-time package for Delphi XE3</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k170.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp170.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
                 </Excluded_Packages>
             </Delphi.Personality>
             <Deployment/>

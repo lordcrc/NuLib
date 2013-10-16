@@ -1,4 +1,4 @@
-unit NuContainers.Test;
+unit NuLib.Containers.Test;
 
 interface
 
@@ -9,8 +9,8 @@ uses
   System.Character,
   Generics.Defaults,
   Generics.Collections,
-  NuContainers.Common,
-  NuContainers;
+  NuLib.Containers.Common,
+  NuLib.Containers;
 
 procedure RunTests;
 
@@ -114,11 +114,11 @@ type
   TDictWrapper<K, V> = class(TInterfacedObject, IDict<K, V>)
   private
     type
-      TDict = NuContainers.Dictionary<K, V>;
+      TDict = NuLib.Containers.Dictionary<K, V>;
   private
     FDict: TDict;
   public
-    constructor Create(const Comparer: NuContainers.Common.IEqualityComparer<K> = nil);
+    constructor Create(const Comparer: NuLib.Containers.Common.IEqualityComparer<K> = nil);
 
     function GetCount: UInt32;
     function GetItem(const Key: K): V;
@@ -138,7 +138,7 @@ begin
   FDict.Clear;
 end;
 
-constructor TDictWrapper<K, V>.Create(const Comparer: NuContainers.Common.IEqualityComparer<K>);
+constructor TDictWrapper<K, V>.Create(const Comparer: NuLib.Containers.Common.IEqualityComparer<K>);
 begin
   inherited Create;
 
@@ -185,7 +185,7 @@ type
     function GetHashCode(const Value: string): Integer; reintroduce;
   end;
 
-  TStringEqualityComparer = class(TInterfacedObject, NuContainers.Common.IEqualityComparer<string>)
+  TStringEqualityComparer = class(TInterfacedObject, NuLib.Containers.Common.IEqualityComparer<string>)
   public
     function Equals(const Left, Right: string): Boolean; reintroduce;
     function GetHashCode(const Value: string): UInt32; reintroduce;
@@ -336,7 +336,7 @@ type
     function GetHashCode(const Value: TRec): Integer; reintroduce;
   end;
 
-  TRecEqualityComparer = class(TInterfacedObject, NuContainers.Common.IEqualityComparer<TRec>)
+  TRecEqualityComparer = class(TInterfacedObject, NuLib.Containers.Common.IEqualityComparer<TRec>)
   public
     function Equals(const Left, Right: TRec): Boolean; reintroduce;
     function GetHashCode(const Value: TRec): UInt32; reintroduce;
@@ -387,7 +387,7 @@ type
     function GetHashCode(const Value: Integer): Integer; reintroduce;
   end;
 
-  TIntegerEqualityComparer = class(TInterfacedObject, NuContainers.Common.IEqualityComparer<Integer>)
+  TIntegerEqualityComparer = class(TInterfacedObject, NuLib.Containers.Common.IEqualityComparer<Integer>)
   public
     function Equals(const Left, Right: Integer): Boolean; reintroduce;
     function GetHashCode(const Value: Integer): UInt32; reintroduce;

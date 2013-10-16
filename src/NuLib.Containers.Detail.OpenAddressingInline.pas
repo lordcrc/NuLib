@@ -1,25 +1,26 @@
-unit NuContainers.Detail.OpenAddressingSeparate;
+unit NuLib.Containers.Detail.OpenAddressingInline;
 
 interface
 
 uses
-  Generics.Defaults, NuContainers.Common, NuContainers.Detail;
+  Generics.Defaults, NuLib.Containers.Common, NuLib.Containers.Detail;
 
 type
   DictItemFlag = (difHasKey, difOccupied);
   DictItemFlags = set of DictItemFlag;
 
-  Dictionary<K, V> = class
+  Dictionary<K, V> = class(TInterfacedObject, IDictionaryImplementation<K, V>)
   public
     type
       DictItem = record
         Hash: UInt32;
         Key: K;
+        Value: V;
         Flags: DictItemFlags;
       end;
+      PDictItem = ^DictItem;
   private
     FItems: TArray<DictItem>;
-    FValues: TArray<V>;
 
     FCount: UInt32;
     FCapacity: UInt32;
@@ -43,6 +44,9 @@ type
     // otherwise it returns false and Index contains an index to an available item for that Key
     function FindItem(const Key: K; const Hash: UInt32; out Index: UInt32): Boolean; overload;
 
+    function GetComparer: IEqualityComparer<K>;
+    function GetCount: UInt32;
+    function GetCapacity: UInt32;
     function GetItem(const Key: K): V;
     procedure SetItem(const Key: K; const Value: V);
     function GetLoad: double;
@@ -50,9 +54,8 @@ type
     function GetContains(const Key: K): Boolean;
   public
     const MINIMUM_CAPACITY = 7;
-    const EMPTY_HASH = UInt32(-1); // max capacity is largest prime less than 2^32-1
   public
-    constructor Create(const Comparer: NuContainers.IEqualityComparer<K>);
+    constructor Create(const Comparer: NuLib.Containers.IEqualityComparer<K>);
     destructor Destroy; override;
 
     procedure Clear;
@@ -97,8 +100,8 @@ begin
 
   FItems[idx].Key := Key;
   FItems[idx].Hash := Hash;
+  FItems[idx].Value := Value;
   FItems[idx].Flags := [difHasKey, difOccupied];
-  FValues[idx] := Value;
 
   FCount := FCount + 1;
 end;
@@ -109,7 +112,6 @@ var
   newCapacity: UInt32;
   i, idx: UInt32;
   oldItems: TArray<DictItem>;
-  oldValues: TArray<V>;
   hasItemOld, hasItemNew: boolean;
 begin
   Assert(MinNewCapacity > 0);
@@ -128,12 +130,9 @@ begin
   // rehash
 
   oldItems := FItems;
-  oldValues := FValues;
 
   FItems := nil;
-  FValues := nil;
   SetLength(FItems, FCapacity);
-  SetLength(FValues, FCapacity);
 
   if (Length(oldItems) = 0) then
     exit;
@@ -149,12 +148,12 @@ begin
     Assert(not hasItemNew);
 
     FItems[idx].Hash := oldItems[i].Hash;
-    FItems[idx].Flags := oldItems[i].Flags;
     // swapping prevents refcount changes, if applicable
 //    FItems[idx].Key := oldItems[i].Key;
-//    FValues[idx] := oldValues[i];
+//    FItems[idx].Value := oldItems[i].Value;
     SwapData(FItems[idx].Key, oldItems[i].Key, SizeOf(K));
-    SwapData(FValues[idx], oldValues[i], SizeOf(V));
+    SwapData(FItems[idx].Value, oldItems[i].Value, SizeOf(V));
+    FItems[idx].Flags := oldItems[i].Flags;
   end;
 end;
 
@@ -205,8 +204,10 @@ end;
 
 function Dictionary<K, V>.FindItem(const Key: K; const Hash: UInt32; out Index: UInt32): Boolean;
 var
-  h, h2: UInt32;
-  pr, i, k: UInt32;
+  item: PDictItem;
+  h, h1: UInt32;
+  h2: UInt64; // ai*h2 needs to be 64 bit
+  pr, ak, a, i: UInt32;
   emptyIndex: UInt32;
   keyEqual, foundEmpty: boolean;
 begin
@@ -214,20 +215,22 @@ begin
   if (Capacity = 0) then
     exit;
 
-  h := Hash;
+  h1 := Hash mod Capacity;
   h2 := (Hash mod (Capacity - 2)) + 1; // ensure h2 is never zero
-  pr := FPrimitiveRoot;
-  k := 0;
+  pr := FPrimitiveRoot; // pr is guaranteed to be < M
+  ak := 1;
   Index := 0;
   emptyIndex := 0;
   foundEmpty := false;
 
+  h := h1;
   while True do
   begin
-    i := h mod Capacity;
-    //i := h and (Capacity - 1);
+    i := h;
 
-    if not (difHasKey in FItems[i].Flags) then
+    item := @FItems[i];
+
+    if not (difHasKey in item^.Flags) then
     begin
       // we're at the end of our probing
       // item is empty, no key to check
@@ -236,13 +239,13 @@ begin
       Index := emptyIndex;
       exit;
     end
-    else if (FItems[i].Hash = Hash) then // if hash mismatch keys can't match
+    else if (item^.Hash = Hash) then // if hash mismatch keys can't match
     begin
       // hashes are equal
       // if occupied check if keys really match
-      if (difOccupied in FItems[i].Flags) then
+      if (difOccupied in item^.Flags) then
       begin
-        keyEqual := FComparer.Equals(Key, FItems[i].Key);
+        keyEqual := FComparer.Equals(Key, item^.Key);
         if keyEqual then
         begin
           Index := i;
@@ -260,12 +263,51 @@ begin
     // hashes didn't match
     // this means the item was not the one we wanted
 
-    // exponential probing
-    // h = Hash + pr^k * h2 + k
-    h := Hash + h2 + k;
-    h2 := h2 * pr;
-    k := k + 1;
+    // exponential probing based on
+    //   Improved Exponential Hashing
+    //   Wenbin Luo, Gregory L. Heileman
+    //   http://dx.doi.org/10.1587/elex.1.150
+    //
+    // h_k = h1 + a^k * h2 mod M
+    //
+    // where
+    //    h1 = Hash
+    //    a = pr
+    //    M = Capacity
+    //    a^0 = 0
+    //
+    // if a is a primitive root of M then this will
+    // generate the full sequence
+    //
+    // a^k * h2 can overflow 32 bits quickly
+    // which breaks the full sequence guarantee
+    //
+    // so rewrite
+    //   h1 => h1 mod M = x mod M
+    //   a^k => (a^(k-1) * a) mod M = y mod M
+    //   h2 => h2 mod M = z mod M
+    //
+    // and we get
+    //   h1 + a^k * h2 = (x + y * z) mod M
+    // so we let
+    //   h_k = (x + y * z) mod M
+    // with y being 64bit to prevent overflow
+    // this is a bit slower but hopefully
+    // worth it
+
+    ak := (ak * pr) mod Capacity;
+    h := (h1 + ak * h2) mod Capacity;
   end;
+end;
+
+function Dictionary<K, V>.GetCapacity: UInt32;
+begin
+  result := FCapacity;
+end;
+
+function Dictionary<K, V>.GetComparer: IEqualityComparer<K>;
+begin
+  result := FComparer;
 end;
 
 function Dictionary<K, V>.GetContains(const Key: K): Boolean;
@@ -273,6 +315,11 @@ var
   idx: UInt32;
 begin
   result := FindItem(Key, idx);
+end;
+
+function Dictionary<K, V>.GetCount: UInt32;
+begin
+  result := FCount;
 end;
 
 function Dictionary<K, V>.GetEmpty: Boolean;
@@ -289,7 +336,7 @@ begin
   hasItem := FindItem(Key, hash, idx);
   if hasItem then
   begin
-    result := FValues[idx];
+    result := FItems[idx].Value;
     exit;
   end;
 
@@ -327,8 +374,8 @@ begin
   if not result then
     exit;
 
+  FItems[idx].Value := Default(V);
   FItems[idx].Flags := FItems[idx].Flags - [difOccupied];
-  FValues[idx] := Default(V);
   FCount := FCount - 1;
 end;
 
@@ -350,8 +397,8 @@ begin
   if hasItem then
   begin
     // change value at idx
+    FItems[idx].Value := Value;
     FItems[idx].Flags := FItems[idx].Flags + [difOccupied];
-    FValues[idx] := Value;
     exit;
   end;
 
