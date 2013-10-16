@@ -23,6 +23,45 @@ type
     class function Get: NuLib.Containers.IEqualityComparer<T>; static;
   end;
 
+  IEnumerator<T> = interface
+    function GetCurrent: T;
+    function MoveNext: Boolean;
+    procedure Reset;
+
+    property Current: T read GetCurrent;
+  end;
+
+  DictionaryElementView<K, V> = record
+  public
+    type
+      KeyPtr = ^K;
+      ValuePtr = ^V;
+  strict private
+    FKeyRef: KeyPtr;
+    FValueRef: ValuePtr;
+  public
+    constructor Create(const KeyRef: KeyPtr; const ValueRef: ValuePtr);
+
+    property KeyRef: KeyPtr read FKeyRef;
+    property ValueRef: ValuePtr read FValueRef;
+  end;
+
+  DictionaryEnumerator<K, V> = class(TInterfacedObject, IEnumerator<DictionaryElementView<K, V>>)
+  public
+    type
+      ElementView = DictionaryElementView<K, V>;
+  protected
+    function DoMoveNext: Boolean; virtual; abstract;
+    procedure DoReset; virtual; abstract;
+    function GetCurrentElementView: ElementView; virtual; abstract;
+  public
+    function GetCurrent: ElementView;
+    function MoveNext: Boolean;
+    procedure Reset;
+
+    property Current: ElementView read GetCurrent;
+  end;
+
   IDictionaryImplementation<K, V> = interface
     function GetComparer: IEqualityComparer<K>;
     function GetEmpty: Boolean;
@@ -38,6 +77,8 @@ type
 
     procedure Reserve(const MinNewCapacity: UInt32);
 
+    function GetEnumerator: DictionaryEnumerator<K, V>;
+
     property Comparer: IEqualityComparer<K> read GetComparer;
     property Empty: Boolean read GetEmpty;
     property Count: UInt32 read GetCount;
@@ -46,6 +87,35 @@ type
     property Contains[const Key: K]: Boolean read GetContains;
   end;
 
+  DictionaryKeyEnumerator<K, V> = class(TInterfacedObject, IEnumerator<K>)
+  private
+    FDictEnum: DictionaryEnumerator<K, V>;
+  public
+    // takes ownership of DictEnum
+    constructor Create(const DictEnum: DictionaryEnumerator<K,V>);
+    destructor Destroy; override;
+
+    function GetCurrent: K;
+    function MoveNext: Boolean;
+    procedure Reset;
+
+    property Current: K read GetCurrent;
+  end;
+
+  DictionaryValueEnumerator<K, V> = class(TInterfacedObject, IEnumerator<V>)
+  private
+    FDictEnum: DictionaryEnumerator<K, V>;
+  public
+    // takes ownership of DictEnum
+    constructor Create(const DictEnum: DictionaryEnumerator<K,V>);
+    destructor Destroy; override;
+
+    function GetCurrent: V;
+    function MoveNext: Boolean;
+    procedure Reset;
+
+    property Current: V read GetCurrent;
+  end;
 
 function MurmurFinalize(const hash: UInt32): UInt32; inline;
 
@@ -202,6 +272,93 @@ end;
 class function EqualityComparerInstance<T>.Get: IEqualityComparer<T>;
 begin
   result := TEqualityComparerWrapper<T>.Create(Generics.Defaults.TEqualityComparer<T>.Default);
+end;
+
+{ DictionaryElementView<K, V> }
+
+constructor DictionaryElementView<K, V>.Create(const KeyRef: KeyPtr; const ValueRef: ValuePtr);
+begin
+  FKeyRef := KeyRef;
+  FValueRef := ValueRef;
+end;
+
+{ DictionaryEnumerator<K, V> }
+
+function DictionaryEnumerator<K, V>.GetCurrent: ElementView;
+begin
+  result := GetCurrentElementView;
+end;
+
+function DictionaryEnumerator<K, V>.MoveNext: Boolean;
+begin
+  result := DoMoveNext;
+end;
+
+procedure DictionaryEnumerator<K, V>.Reset;
+begin
+  DoReset;
+end;
+
+{ DictionaryKeyEnumerator<K, V> }
+
+constructor DictionaryKeyEnumerator<K, V>.Create(const DictEnum: DictionaryEnumerator<K, V>);
+begin
+  inherited Create;
+
+  FDictEnum := DictEnum;
+end;
+
+destructor DictionaryKeyEnumerator<K, V>.Destroy;
+begin
+  FDictEnum.Free;
+
+  inherited;
+end;
+
+function DictionaryKeyEnumerator<K, V>.GetCurrent: K;
+begin
+  result := FDictEnum.Current.KeyRef^;
+end;
+
+function DictionaryKeyEnumerator<K, V>.MoveNext: Boolean;
+begin
+  result := FDictEnum.MoveNext;
+end;
+
+procedure DictionaryKeyEnumerator<K, V>.Reset;
+begin
+  FDictEnum.Reset;
+end;
+
+{ DictionaryValueEnumerator<K, V> }
+
+constructor DictionaryValueEnumerator<K, V>.Create(const DictEnum: DictionaryEnumerator<K, V>);
+begin
+  inherited Create;
+
+  FDictEnum := DictEnum;
+end;
+
+destructor DictionaryValueEnumerator<K, V>.Destroy;
+begin
+  FDictEnum.Free;
+
+  inherited;
+end;
+
+function DictionaryValueEnumerator<K, V>.GetCurrent: V;
+begin
+  result := FDictEnum.Current.ValueRef^;
+end;
+
+function DictionaryValueEnumerator<K, V>.MoveNext: Boolean;
+begin
+  result := FDictEnum.MoveNext;
+end;
+
+procedure DictionaryValueEnumerator<K, V>.Reset;
+begin
+  FDictEnum.Reset;
 end;
 
 end.

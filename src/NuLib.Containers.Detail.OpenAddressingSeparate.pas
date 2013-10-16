@@ -9,6 +9,7 @@ type
   DictItemFlag = (difHasKey, difOccupied);
   DictItemFlags = set of DictItemFlag;
 
+  // for testing
   Dictionary<K, V> = class
   public
     type

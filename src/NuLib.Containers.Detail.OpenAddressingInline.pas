@@ -54,6 +54,19 @@ type
     function GetContains(const Key: K): Boolean;
   public
     const MINIMUM_CAPACITY = 7;
+    type
+      DictEnumerator<K, V> = class(DictionaryEnumerator<K, V>)
+      private
+        FDict: Dictionary<K, V>;
+        FInitialized: boolean;
+        FCurIdx: UInt32;
+      public
+        constructor Create(Dict: Dictionary<K, V>);
+
+        function DoMoveNext: Boolean; override;
+        procedure DoReset; override;
+        function GetCurrentElementView: DictionaryEnumerator<K, V>.ElementView; override;
+      end;
   public
     constructor Create(const Comparer: NuLib.Containers.IEqualityComparer<K>);
     destructor Destroy; override;
@@ -62,6 +75,8 @@ type
     function Remove(const Key: K): Boolean;
 
     procedure Reserve(const MinNewCapacity: UInt32);
+
+    function GetEnumerator: DictionaryEnumerator<K, V>;
 
     property Comparer: IEqualityComparer<K> read FComparer;
     property Empty: Boolean read GetEmpty;
@@ -327,6 +342,11 @@ begin
   result := Count = 0;
 end;
 
+function Dictionary<K, V>.GetEnumerator: DictionaryEnumerator<K, V>;
+begin
+  result := DictEnumerator<K, V>.Create(Self);
+end;
+
 function Dictionary<K, V>.GetItem(const Key: K): V;
 var
   idx, hash: UInt32;
@@ -403,6 +423,52 @@ begin
   end;
 
   AddItem(idx, Key, hash, Value);
+end;
+
+{ Dictionary<K, V>.DictEnumerator<K, V> }
+
+constructor Dictionary<K, V>.DictEnumerator<K, V>.Create(Dict: Dictionary<K, V>);
+begin
+  inherited Create;
+
+  FDict := Dict;
+  Reset;
+end;
+
+function Dictionary<K, V>.DictEnumerator<K, V>.DoMoveNext: Boolean;
+begin
+  if FInitialized then
+  begin
+    FCurIdx := FCurIdx + 1;
+  end;
+
+  FInitialized := True;
+
+  while True do
+  begin
+    result := FCurIdx < FDict.Capacity;
+    if not result then
+      exit;
+
+    if difOccupied in FDict.FItems[FCurIdx].Flags then
+      exit;
+
+    // capacity is always less than 2^32-1 so this will be fine
+    FCurIdx := FCurIdx + 1;
+  end;
+end;
+
+procedure Dictionary<K, V>.DictEnumerator<K, V>.DoReset;
+begin
+  inherited;
+  FInitialized := False;
+  FCurIdx := 0;
+end;
+
+function Dictionary<K, V>.DictEnumerator<K, V>.GetCurrentElementView: DictionaryEnumerator<K, V>.ElementView;
+begin
+  with FDict.FItems[FCurIdx] do
+    result := ElementView.Create(@Key, @Value);
 end;
 
 end.

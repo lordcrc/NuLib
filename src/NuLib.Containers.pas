@@ -36,30 +36,63 @@ type
     property Second: T2 read value2 write value2;
   end;
 
-
   Dictionary<K, V> = record
+  public
+    type
+      EnumeratorImpl<T> = record
+      strict private
+        FEnum: NuLib.IEnumerator<T>;
+      public
+        constructor Create(const Enum: NuLib.IEnumerator<T>);
+
+        function GetEnumerator: NuLib.IEnumerator<T>;
+      end;
+
+      // this belongs in Detail, but due to type forwarding limitations
+      // it has to go here :(
+      DictionaryElementEnumerator = class(TInterfacedObject, IEnumerator<Pair<K, V>>)
+      strict private
+        FDictEnum: NuLib.Containers.Detail.DictionaryEnumerator<K, V>;
+      public
+        constructor Create(const DictEnum: NuLib.Containers.Detail.DictionaryEnumerator<K, V>);
+
+        function GetCurrent: Pair<K, V>;
+        function MoveNext: Boolean;
+        procedure Reset;
+
+        property Current: Pair<K, V> read GetCurrent;
+      end;
+
   private
     type
 //      TDictImpl = NuLib.Containers.Detail.OpenAddressingSeparate.Dictionary<K, V>;
       TDictImpl = NuLib.Containers.Detail.OpenAddressingInline.Dictionary<K, V>;
   strict private
     FDict: NuLib.Containers.Detail.IDictionaryImplementation<K,V>;
+
   private
     function GetCount: UInt32; inline;
     function GetItem(const Key: K): V; inline;
     procedure SetItem(const Key: K; const Value: V); inline;
     function GetEmpty: Boolean;
     function GetContains(const Key: K): Boolean;
+    function GetKeys: EnumeratorImpl<K>;
+    function GetValues: EnumeratorImpl<V>;
+
   public
     procedure Clear;
     function Remove(const Key: K): Boolean;
 
     procedure Reserve(const MinNewCapacity: UInt32);
 
+    function GetEnumerator: DictionaryElementEnumerator;
+
     property Empty: Boolean read GetEmpty;
     property Count: UInt32 read GetCount;
     property Item[const Key: K]: V read GetItem write SetItem; default;
     property Contains[const Key: K]: Boolean read GetContains;
+    property Keys: EnumeratorImpl<K> read GetKeys;
+    property Values: EnumeratorImpl<V> read GetValues;
 
     class function Create: Dictionary<K, V>; overload; static;
     class function Create(const Comparer: NuLib.IEqualityComparer<K>): Dictionary<K, V>; overload; static;
@@ -114,9 +147,24 @@ begin
   result := FDict.Empty;
 end;
 
+function Dictionary<K, V>.GetEnumerator: DictionaryElementEnumerator;
+begin
+  result := DictionaryElementEnumerator.Create(FDict.GetEnumerator);
+end;
+
 function Dictionary<K, V>.GetItem(const Key: K): V;
 begin
   result := FDict.Item[Key];
+end;
+
+function Dictionary<K, V>.GetKeys: EnumeratorImpl<K>;
+begin
+  result := EnumeratorImpl<K>.Create(NuLib.Containers.Detail.DictionaryKeyEnumerator<K,V>.Create(FDict.GetEnumerator));
+end;
+
+function Dictionary<K, V>.GetValues: EnumeratorImpl<V>;
+begin
+  result := EnumeratorImpl<V>.Create(NuLib.Containers.Detail.DictionaryValueEnumerator<K,V>.Create(FDict.GetEnumerator));
 end;
 
 function Dictionary<K, V>.Remove(const Key: K): Boolean;
@@ -132,6 +180,44 @@ end;
 procedure Dictionary<K, V>.SetItem(const Key: K; const Value: V);
 begin
   FDict.Item[Key] := Value;
+end;
+
+{ Dictionary<K, V>.EnumeratorImpl<T> }
+
+constructor Dictionary<K, V>.EnumeratorImpl<T>.Create(const Enum: NuLib.IEnumerator<T>);
+begin
+  FEnum := Enum;
+end;
+
+function Dictionary<K, V>.EnumeratorImpl<T>.GetEnumerator: NuLib.IEnumerator<T>;
+begin
+  result := FEnum;
+end;
+
+{ Dictionary<K, V>.DictionaryElementEnumerator<K, V> }
+
+constructor Dictionary<K, V>.DictionaryElementEnumerator.Create(
+  const DictEnum: NuLib.Containers.Detail.DictionaryEnumerator<K, V>);
+begin
+  inherited Create;
+
+  FDictEnum := DictEnum;
+end;
+
+function Dictionary<K, V>.DictionaryElementEnumerator.GetCurrent: Pair<K, V>;
+begin
+  with FDictEnum.Current do
+    result := Pair<K,V>.Create(KeyRef^, ValueRef^);
+end;
+
+function Dictionary<K, V>.DictionaryElementEnumerator.MoveNext: Boolean;
+begin
+  result := FDictEnum.MoveNext;
+end;
+
+procedure Dictionary<K, V>.DictionaryElementEnumerator.Reset;
+begin
+  FDictEnum.Reset;
 end;
 
 end.

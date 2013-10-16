@@ -477,6 +477,19 @@ begin
   end;
 end;
 
+procedure WordHist(const dict: NuLib.Dictionary<String,Integer>; Words: TStrings); overload;
+var
+  s: string;
+  c: integer;
+begin
+  for s in Words do
+  begin
+    c := dict[s];
+
+    dict[s] := c + 1;
+  end;
+end;
+
 procedure MakeWordlist;
 var
   words, sl: TStringList;
@@ -679,6 +692,29 @@ begin
   WriteLn(Format('Time: %8.2f  %8.2f', [t1, t2]));
 end;
 
+procedure Test4;
+var
+  dict: NuLib.Containers.Dictionary<string, Integer>;
+  words: TStringList;
+  elm: NuLib.Pair<string, integer>;
+begin
+  WriteLn('Test4');
+
+  dict := NuLib.Containers.Dictionary<string, Integer>.Create(TStringEqualityComparer.Create as NuLib.Containers.Common.IEqualityComparer<string>);
+
+  words := TStringList.Create;
+  words.LoadFromFile('words1.txt');
+
+  WordHist(dict, words);
+
+  words.Clear;
+
+  for elm in dict do
+  begin
+    WriteLn(elm.Key, ' => ', elm.Value);
+  end;
+end;
+
 
 procedure RunTests;
 begin
@@ -687,7 +723,8 @@ begin
   //MakeWordlist;
   //Test1;
   //Test2;
-  Test3;
+  //Test3;
+  Test4;
 end;
 
 end.
