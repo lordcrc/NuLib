@@ -31,6 +31,21 @@ type
     property Current: T read GetCurrent;
   end;
 
+  ///	<summary>
+  ///	  GetEnumerator implementation.
+  ///	</summary>
+  ///	<typeparam name="T">
+  ///	  Enumerator to return.
+  ///	</typeparam>
+  EnumeratorImpl<T> = record
+  strict private
+    FEnum: NuLib.IEnumerator<T>;
+  public
+    constructor Create(const Enum: NuLib.IEnumerator<T>);
+
+    function GetEnumerator: NuLib.IEnumerator<T>;
+  end;
+
   DictionaryElementView<K, V> = record
   public
     type
@@ -274,6 +289,18 @@ begin
   result := TEqualityComparerWrapper<T>.Create(Generics.Defaults.TEqualityComparer<T>.Default);
 end;
 
+{ EnumeratorImpl<T> }
+
+constructor EnumeratorImpl<T>.Create(const Enum: NuLib.IEnumerator<T>);
+begin
+  FEnum := Enum;
+end;
+
+function EnumeratorImpl<T>.GetEnumerator: NuLib.IEnumerator<T>;
+begin
+  result := FEnum;
+end;
+
 { DictionaryElementView<K, V> }
 
 constructor DictionaryElementView<K, V>.Create(const KeyRef: KeyPtr; const ValueRef: ValuePtr);
@@ -360,5 +387,6 @@ procedure DictionaryValueEnumerator<K, V>.Reset;
 begin
   FDictEnum.Reset;
 end;
+
 
 end.

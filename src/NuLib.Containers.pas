@@ -36,18 +36,18 @@ type
     property Second: T2 read value2 write value2;
   end;
 
+  ///	<summary>
+  ///	  An associative container.
+  ///	</summary>
+  ///	<typeparam name="K">
+  ///	  Key type
+  ///	</typeparam>
+  ///	<typeparam name="V">
+  ///	  Value type
+  ///	</typeparam>
   Dictionary<K, V> = record
   public
     type
-      EnumeratorImpl<T> = record
-      strict private
-        FEnum: NuLib.IEnumerator<T>;
-      public
-        constructor Create(const Enum: NuLib.IEnumerator<T>);
-
-        function GetEnumerator: NuLib.IEnumerator<T>;
-      end;
-
       // this belongs in Detail, but due to type forwarding limitations
       // it has to go here :(
       DictionaryElementEnumerator = class(TInterfacedObject, IEnumerator<Pair<K, V>>)
@@ -80,18 +80,131 @@ type
     function GetValues: EnumeratorImpl<V>;
 
   public
+    ///	<summary>
+    ///	  Removes all the elements in the dictionary.
+    ///	</summary>
     procedure Clear;
+
+    ///	<summary>
+    ///	  <para>
+    ///	    Removes an element from the dictionary.
+    ///	  </para>
+    ///	  <para>
+    ///	    Complexity (average): Constant.<br />Complexity (worst-case):
+    ///	    Linear in number of elements.
+    ///	  </para>
+    ///	</summary>
+    ///	<param name="Key">
+    ///	  Key of the element to be removed.
+    ///	</param>
+    ///	<returns>
+    ///	  True if the element was removed, false otherwise.
+    ///	</returns>
     function Remove(const Key: K): Boolean;
 
+    ///	<summary>
+    ///	  <para>
+    ///	    Reserves capacity for a minmum number of elements.
+    ///	  </para>
+    ///	  <para>
+    ///	    Complexity: Linear in number of elements if reallocation occurs.
+    ///	  </para>
+    ///	</summary>
+    ///	<param name="MinNewCapacity">
+    ///	  Minimum number of elements the dictionary should be able to hold.
+    ///	</param>
+    ///	<remarks>
+    ///	  Reserving capacity does not guarantee that the dictionary will not
+    ///	  reallocate memory, even though the number of elements are less than
+    ///	  MinNewCapacity.
+    ///	</remarks>
     procedure Reserve(const MinNewCapacity: UInt32);
 
     function GetEnumerator: DictionaryElementEnumerator;
 
+    ///	<summary>
+    ///	  <para>
+    ///	    Returns True if the dictionary is empty, otherwise False.
+    ///	  </para>
+    ///	  <para>
+    ///	    Complexity: Constant.
+    ///	  </para>
+    ///	</summary>
     property Empty: Boolean read GetEmpty;
+
+    ///	<summary>
+    ///	  <para>
+    ///	    Returns the number of elements in the dictionary.
+    ///	  </para>
+    ///	  <para>
+    ///	    Complexity: O(1).
+    ///	  </para>
+    ///	</summary>
+    ///	<value>
+    ///	  Number of elements in the dictionary.
+    ///	</value>
     property Count: UInt32 read GetCount;
+
+    ///	<summary>
+    ///	  <para>
+    ///	    Returns the value of the element with the given key. If the element
+    ///	    does not already exist in the dictionary, it is added, and the
+    ///	    default value for type V is returned.
+    ///	  </para>
+    ///	  <para>
+    ///	    Complexity (average): Constant. 
+    ///	  </para>
+    ///	  <para>
+    ///	    Complexity (worst-case): Linear in number of elements.
+    ///	  </para>
+    ///	  <para>
+    ///	    May trigger reallocation (not included).
+    ///	  </para>
+    ///	</summary>
+    ///	<param name="Key">
+    ///	  Key of the element.
+    ///	</param>
+    ///	<value>
+    ///	  Value of the corresponding key.
+    ///	</value>
     property Item[const Key: K]: V read GetItem write SetItem; default;
+
+    ///	<summary>
+    ///	  <para>
+    ///	    Checks if an element with the given key is present in the
+    ///	    dictionary.
+    ///	  </para>
+    ///	  <para>
+    ///	    Complexity (average): Constant.
+    ///	  </para>
+    ///	  <para>
+    ///	    Complexity (worst-case): Linear in number of elements.
+    ///	  </para>
+    ///	</summary>
+    ///	<param name="Key">
+    ///	  Key to look up.
+    ///	</param>
+    ///	<value>
+    ///	  Returns True if the dictionary contains the element, False otherwise.
+    ///	</value>
     property Contains[const Key: K]: Boolean read GetContains;
+
+    ///	<summary>
+    ///	  An enumerator for the keys in the dictionary.
+    ///	</summary>
+    ///	<remarks>
+    ///	  The enumeration order is not defined, and typically does not
+    ///	  correspond to the insertion order.
+    ///	</remarks>
     property Keys: EnumeratorImpl<K> read GetKeys;
+
+    ///	<summary>
+    ///	  An enumerator for the values in the dictionary.
+    ///	</summary>
+    ///	<remarks>
+    ///	  The enumeration order is not defined, and typically does not
+    ///	  correspond to the insertion order.
+    ///	</remarks>
     property Values: EnumeratorImpl<V> read GetValues;
 
     class function Create: Dictionary<K, V>; overload; static;
@@ -180,18 +293,6 @@ end;
 procedure Dictionary<K, V>.SetItem(const Key: K; const Value: V);
 begin
   FDict.Item[Key] := Value;
-end;
-
-{ Dictionary<K, V>.EnumeratorImpl<T> }
-
-constructor Dictionary<K, V>.EnumeratorImpl<T>.Create(const Enum: NuLib.IEnumerator<T>);
-begin
-  FEnum := Enum;
-end;
-
-function Dictionary<K, V>.EnumeratorImpl<T>.GetEnumerator: NuLib.IEnumerator<T>;
-begin
-  result := FEnum;
 end;
 
 { Dictionary<K, V>.DictionaryElementEnumerator<K, V> }
