@@ -55,7 +55,7 @@ type
   public
     const MINIMUM_CAPACITY = 7;
     type
-      DictEnumerator<K, V> = class(DictionaryEnumerator<K, V>)
+      DictionaryElementViewEnumeratorImpl = class(DictionaryElementViewEnumerator<K,V>)
       private
         FDict: Dictionary<K, V>;
         FInitialized: boolean;
@@ -65,7 +65,7 @@ type
 
         function DoMoveNext: Boolean; override;
         procedure DoReset; override;
-        function GetCurrentElementView: DictionaryEnumerator<K, V>.ElementView; override;
+        function GetCurrentElementView: DictionaryElementViewEnumerator<K,V>.ElementView; override;
       end;
   public
     constructor Create(const Comparer: NuLib.Containers.IEqualityComparer<K>);
@@ -76,7 +76,7 @@ type
 
     procedure Reserve(const MinNewCapacity: UInt32);
 
-    function GetEnumerator: DictionaryEnumerator<K, V>;
+    function GetEnumerator: DictionaryElementViewEnumerator<K,V>;
 
     property Comparer: IEqualityComparer<K> read FComparer;
     property Empty: Boolean read GetEmpty;
@@ -342,9 +342,9 @@ begin
   result := Count = 0;
 end;
 
-function Dictionary<K, V>.GetEnumerator: DictionaryEnumerator<K, V>;
+function Dictionary<K, V>.GetEnumerator: DictionaryElementViewEnumerator<K,V>;
 begin
-  result := DictEnumerator<K, V>.Create(Self);
+  result := DictionaryElementViewEnumeratorImpl.Create(Self);
 end;
 
 function Dictionary<K, V>.GetItem(const Key: K): V;
@@ -425,9 +425,9 @@ begin
   AddItem(idx, Key, hash, Value);
 end;
 
-{ Dictionary<K, V>.DictEnumerator<K, V> }
+{ Dictionary<K, V>.DictionaryElementViewEnumeratorImpl<K, V> }
 
-constructor Dictionary<K, V>.DictEnumerator<K, V>.Create(Dict: Dictionary<K, V>);
+constructor Dictionary<K, V>.DictionaryElementViewEnumeratorImpl.Create(Dict: Dictionary<K, V>);
 begin
   inherited Create;
 
@@ -435,7 +435,7 @@ begin
   Reset;
 end;
 
-function Dictionary<K, V>.DictEnumerator<K, V>.DoMoveNext: Boolean;
+function Dictionary<K, V>.DictionaryElementViewEnumeratorImpl.DoMoveNext: Boolean;
 begin
   if FInitialized then
   begin
@@ -458,14 +458,14 @@ begin
   end;
 end;
 
-procedure Dictionary<K, V>.DictEnumerator<K, V>.DoReset;
+procedure Dictionary<K, V>.DictionaryElementViewEnumeratorImpl.DoReset;
 begin
   inherited;
   FInitialized := False;
   FCurIdx := 0;
 end;
 
-function Dictionary<K, V>.DictEnumerator<K, V>.GetCurrentElementView: DictionaryEnumerator<K, V>.ElementView;
+function Dictionary<K, V>.DictionaryElementViewEnumeratorImpl.GetCurrentElementView: DictionaryElementViewEnumerator<K,V>.ElementView;
 begin
   with FDict.FItems[FCurIdx] do
     result := ElementView.Create(@Key, @Value);

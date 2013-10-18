@@ -61,7 +61,7 @@ type
     property ValueRef: ValuePtr read FValueRef;
   end;
 
-  DictionaryEnumerator<K, V> = class(TInterfacedObject, IEnumerator<DictionaryElementView<K, V>>)
+  DictionaryElementViewEnumerator<K, V> = class(TInterfacedObject, IEnumerator<DictionaryElementView<K, V>>)
   public
     type
       ElementView = DictionaryElementView<K, V>;
@@ -92,7 +92,7 @@ type
 
     procedure Reserve(const MinNewCapacity: UInt32);
 
-    function GetEnumerator: DictionaryEnumerator<K, V>;
+    function GetEnumerator: DictionaryElementViewEnumerator<K, V>;
 
     property Comparer: IEqualityComparer<K> read GetComparer;
     property Empty: Boolean read GetEmpty;
@@ -104,10 +104,10 @@ type
 
   DictionaryKeyEnumerator<K, V> = class(TInterfacedObject, IEnumerator<K>)
   private
-    FDictEnum: DictionaryEnumerator<K, V>;
+    FDictEnum: DictionaryElementViewEnumerator<K, V>;
   public
     // takes ownership of DictEnum
-    constructor Create(const DictEnum: DictionaryEnumerator<K,V>);
+    constructor Create(const DictEnum: DictionaryElementViewEnumerator<K,V>);
     destructor Destroy; override;
 
     function GetCurrent: K;
@@ -119,10 +119,10 @@ type
 
   DictionaryValueEnumerator<K, V> = class(TInterfacedObject, IEnumerator<V>)
   private
-    FDictEnum: DictionaryEnumerator<K, V>;
+    FDictEnum: DictionaryElementViewEnumerator<K, V>;
   public
     // takes ownership of DictEnum
-    constructor Create(const DictEnum: DictionaryEnumerator<K,V>);
+    constructor Create(const DictEnum: DictionaryElementViewEnumerator<K,V>);
     destructor Destroy; override;
 
     function GetCurrent: V;
@@ -309,26 +309,26 @@ begin
   FValueRef := ValueRef;
 end;
 
-{ DictionaryEnumerator<K, V> }
+{ DictionaryElementViewEnumerator<K, V> }
 
-function DictionaryEnumerator<K, V>.GetCurrent: ElementView;
+function DictionaryElementViewEnumerator<K, V>.GetCurrent: ElementView;
 begin
   result := GetCurrentElementView;
 end;
 
-function DictionaryEnumerator<K, V>.MoveNext: Boolean;
+function DictionaryElementViewEnumerator<K, V>.MoveNext: Boolean;
 begin
   result := DoMoveNext;
 end;
 
-procedure DictionaryEnumerator<K, V>.Reset;
+procedure DictionaryElementViewEnumerator<K, V>.Reset;
 begin
   DoReset;
 end;
 
 { DictionaryKeyEnumerator<K, V> }
 
-constructor DictionaryKeyEnumerator<K, V>.Create(const DictEnum: DictionaryEnumerator<K, V>);
+constructor DictionaryKeyEnumerator<K, V>.Create(const DictEnum: DictionaryElementViewEnumerator<K, V>);
 begin
   inherited Create;
 
@@ -359,7 +359,7 @@ end;
 
 { DictionaryValueEnumerator<K, V> }
 
-constructor DictionaryValueEnumerator<K, V>.Create(const DictEnum: DictionaryEnumerator<K, V>);
+constructor DictionaryValueEnumerator<K, V>.Create(const DictEnum: DictionaryElementViewEnumerator<K, V>);
 begin
   inherited Create;
 
@@ -387,6 +387,5 @@ procedure DictionaryValueEnumerator<K, V>.Reset;
 begin
   FDictEnum.Reset;
 end;
-
 
 end.

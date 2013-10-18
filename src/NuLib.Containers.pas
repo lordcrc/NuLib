@@ -37,7 +37,12 @@ type
   end;
 
   ///	<summary>
-  ///	  An associative container.
+  ///	  <para>
+  ///	    An associative container.
+  ///	  </para>
+  ///	  <para>
+  ///	    Provides fast key to value mapping.
+  ///	  </para>
   ///	</summary>
   ///	<typeparam name="K">
   ///	  Key type
@@ -52,9 +57,9 @@ type
       // it has to go here :(
       DictionaryElementEnumerator = class(TInterfacedObject, IEnumerator<Pair<K, V>>)
       strict private
-        FDictEnum: NuLib.Containers.Detail.DictionaryEnumerator<K, V>;
+        FDictEnum: NuLib.Containers.Detail.DictionaryElementViewEnumerator<K, V>;
       public
-        constructor Create(const DictEnum: NuLib.Containers.Detail.DictionaryEnumerator<K, V>);
+        constructor Create(const DictEnum: NuLib.Containers.Detail.DictionaryElementViewEnumerator<K, V>);
 
         function GetCurrent: Pair<K, V>;
         function MoveNext: Boolean;
@@ -62,7 +67,6 @@ type
 
         property Current: Pair<K, V> read GetCurrent;
       end;
-
   private
     type
 //      TDictImpl = NuLib.Containers.Detail.OpenAddressingSeparate.Dictionary<K, V>;
@@ -298,7 +302,7 @@ end;
 { Dictionary<K, V>.DictionaryElementEnumerator<K, V> }
 
 constructor Dictionary<K, V>.DictionaryElementEnumerator.Create(
-  const DictEnum: NuLib.Containers.Detail.DictionaryEnumerator<K, V>);
+  const DictEnum: NuLib.Containers.Detail.DictionaryElementViewEnumerator<K, V>);
 begin
   inherited Create;
 
