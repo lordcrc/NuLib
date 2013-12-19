@@ -1,4 +1,4 @@
-program NuLibFunctional;
+program NuLibFunctionalTest;
 
 {$APPTYPE CONSOLE}
 
