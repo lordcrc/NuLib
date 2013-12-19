@@ -23,7 +23,8 @@ type
     FImpl: NuLib.Functional.Detail.IEnumerableImpl<T>;
   public
 
-    function Aggregate<TAccumulate>(const InitialValue: TAccumulate; const AccumulateFunc: Func<TAccumulate, T, TAccumulate>): TAccumulate;
+    function Aggregate(const AccumulateFunc: Func<T, T, T>): T; overload;
+    function Aggregate<TAccumulate>(const InitialValue: TAccumulate; const AccumulateFunc: Func<TAccumulate, T, TAccumulate>): TAccumulate; overload;
 
     ///	<summary>
     ///	  Filters a sequence based on the supplied predicate.
@@ -107,6 +108,11 @@ begin
 end;
 
 { Enumerable<T> }
+
+function Enumerable<T>.Aggregate(const AccumulateFunc: Func<T, T, T>): T;
+begin
+  result := AggregateImpl.Compute<T>(FImpl, AccumulateFunc);
+end;
 
 function Enumerable<T>.Aggregate<TAccumulate>(const InitialValue: TAccumulate;
   const AccumulateFunc: Func<TAccumulate, T, TAccumulate>): TAccumulate;
