@@ -6,7 +6,7 @@ uses
   System.TypInfo;
 
 type
-  RIFunc<R> = reference to function(const Instance: TObject): R;
+  RIFunc<R> = reference to function(const Instance): R;
 
 type
   RIConstructor<TObj: class> = record
@@ -69,33 +69,40 @@ begin
 
   virtualIndex := m.VirtualIndex;
   case m.DispatchKind of
+    dkInterface: begin
+      getCodeAddress :=
+        function (const Instance): pointer
+        begin
+          result := PPVtable(Instance)^[virtualIndex];
+        end;
+    end;
     dkVtable: begin
       getCodeAddress :=
-        function (const Instance: TObject): pointer
+        function (const Instance): pointer
         var
           cls: TClass;
         begin
-          cls := Instance.ClassType;
+          cls := TObject(Instance).ClassType;
           result := PVtable(cls)^[virtualIndex];
         end;
     end;
     dkDynamic: begin
       getCodeAddress :=
-        function (const Instance: TObject): pointer
+        function (const Instance): pointer
         var
           cls: TClass;
         begin
-          cls := Instance.ClassType;
+          cls := TObject(Instance).ClassType;
           result := GetDynaMethod(cls, virtualIndex);
         end;
-    end
+    end;
   else
     codeAddress := m.CodeAddress;
     if (codeAddress = nil) or (PPointer(codeAddress)^ = nil) then
       raise EArgumentException.Create('No RTTI found for "' + MethodName + '"');
 
     getCodeAddress :=
-      function (const Instance: TObject): pointer
+      function (const Instance): pointer
       begin
         result := codeAddress;
       end;
@@ -104,7 +111,7 @@ begin
   case m.CallingConvention of
     ccReg:
       result :=
-        function(const Instance: TObject): R
+        function(const Instance): R
         var
           fm: TMethod;
           f: ImplFuncReg<R>;
@@ -116,7 +123,7 @@ begin
         end;
     ccCdecl:
       result :=
-        function(const Instance: TObject): R
+        function(const Instance): R
         var
           fm: TMethod;
           f: ImplFuncCdecl<R>;
@@ -128,7 +135,7 @@ begin
         end;
     ccPascal:
       result :=
-        function(const Instance: TObject): R
+        function(const Instance): R
         var
           fm: TMethod;
           f: ImplFuncPascal<R>;
@@ -140,7 +147,7 @@ begin
         end;
     ccStdCall:
       result :=
-        function(const Instance: TObject): R
+        function(const Instance): R
         var
           fm: TMethod;
           f: ImplFuncStdCall<R>;
@@ -152,7 +159,7 @@ begin
         end;
     ccSafeCall:
       result :=
-        function(const Instance: TObject): R
+        function(const Instance): R
         var
           fm: TMethod;
           f: ImplFuncSafeCall<R>;
@@ -171,6 +178,7 @@ var
   typ: TRttiType;
   p: TRttiProperty;
   ip: TRttiInstanceProperty;
+  m: TRttiMethod;
   getter: pointer;
   codeAddress: pointer;
   index: integer;
@@ -181,58 +189,69 @@ begin
   if not Assigned(typ) then
     raise EArgumentException.Create('No RTTI found ("' + GetTypeName(TypInfo) + '")');
 
-  p := typ.GetProperty(PropertyName);
-
-  Assert(p is TRttiInstanceProperty, 'Property is not TRttiInstanceProperty');
-
-  ip := TRttiInstanceProperty(p);
-
-  getter := ip.PropInfo^.GetProc;
-  if (IntPtr(getter) and PROPSLOT_MASK) = PROPSLOT_FIELD then
+  if (typ.TypeKind = tkInterface) then
   begin
-    result :=
-      function(const Instance: TObject): R
-      var
-        f: Helper<R>.Ptr;
-      begin
-        f := Helper<R>.Ptr(PByte(Instance) + (UIntPtr(getter) and (not PROPSLOT_MASK)));
-        result := f^;
-      end;
+    m := typ.GetMethod('Get' + PropertyName); // assume name of getters
+    Assert(Assigned(m), 'Invalid interface property');
+
+    result := Func<R>(TypInfo, 'Get' + PropertyName);
   end
-  else
+  else if (typ.TypeKind = tkClass) then
   begin
-    if ip.PropInfo^.Index = Low(ip.PropInfo^.Index) then
+    p := typ.GetProperty(PropertyName);
+    Assert(p is TRttiInstanceProperty, 'Property is not TRttiInstanceProperty');
+
+    ip := TRttiInstanceProperty(p);
+
+    getter := ip.PropInfo^.GetProc;
+    if (IntPtr(getter) and PROPSLOT_MASK) = PROPSLOT_FIELD then
     begin
-      // not indexed
       result :=
-        function(const Instance: TObject): R
+        function(const Instance): R
         var
-          gm: TMethod;
-          g: ImplFuncReg<R>;
+          f: Helper<R>.Ptr;
         begin
-          gm.Code := GetPropCodeAddress(Instance, getter);
-          gm.Data := pointer(Instance);
-          g := ImplPropGet<R>(gm);
-          result := g();
+          f := Helper<R>.Ptr(PByte(Instance) + (UIntPtr(getter) and (not PROPSLOT_MASK)));
+          result := f^;
         end;
     end
     else
     begin
-      index := ip.PropInfo^.Index;
-      // indexed
-      result :=
-        function(const Instance: TObject): R
-        var
-          gm: TMethod;
-          g: ImplPropGetIdx<R>;
-        begin
-          gm.Code := GetPropCodeAddress(Instance, getter);
-          gm.Data := pointer(Instance);
-          g := ImplPropGetIdx<R>(gm);
-          result := g(index);
-        end;
+      if ip.PropInfo^.Index = Low(ip.PropInfo^.Index) then
+      begin
+        // not indexed
+        result :=
+          function(const Instance): R
+          var
+            gm: TMethod;
+            g: ImplFuncReg<R>;
+          begin
+            gm.Code := GetPropCodeAddress(Instance, getter);
+            gm.Data := pointer(Instance);
+            g := ImplPropGet<R>(gm);
+            result := g();
+          end;
+      end
+      else
+      begin
+        index := ip.PropInfo^.Index;
+        // indexed
+        result :=
+          function(const Instance): R
+          var
+            gm: TMethod;
+            g: ImplPropGetIdx<R>;
+          begin
+            gm.Code := GetPropCodeAddress(Instance, getter);
+            gm.Data := pointer(Instance);
+            g := ImplPropGetIdx<R>(gm);
+            result := g(index);
+          end;
+      end;
     end;
-  end;
+  end
+  else
+    Assert(false, 'Invalid type');
 end;
 
 end.

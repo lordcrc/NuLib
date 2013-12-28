@@ -17,7 +17,7 @@ type
   ImplPropGet<R> = function(): R of object;
   ImplPropGetIdx<R> = function(Index: integer): R of object;
 
-  MethodCodeAddressFunc = reference to function(const Instance: TObject): pointer;
+  MethodCodeAddressFunc = reference to function(const Instance): pointer;
 
 type
   Helper<T> = record
@@ -26,14 +26,14 @@ type
       Ptr = ^T;
   end;
 
-function GetPropCodeAddress(const Instance: TObject; Getter: pointer): pointer;
+function GetPropCodeAddress(const Instance; Getter: pointer): pointer;
 
 implementation
 
 uses
   System.TypInfo;
 
-function GetPropCodeAddress(const Instance: TObject; Getter: pointer): pointer;
+function GetPropCodeAddress(const Instance; Getter: pointer): pointer;
 begin
   if (IntPtr(Getter) and PROPSLOT_MASK) = PROPSLOT_VIRTUAL then
   begin

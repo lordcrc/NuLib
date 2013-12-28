@@ -10,7 +10,14 @@ uses
   System.SysUtils, NuLib.RuntimeInvocation;
 
 type
-  TWidget = class
+  IWidget = interface(IInvokable)
+    function GetId: string;
+    function WidgetType: string;
+
+    property Id: string read GetId;
+  end;
+
+  TWidget = class(TInterfacedObject, IWidget)
   private
     FId: string;
     function GetId: string;
@@ -57,6 +64,7 @@ var
   widget: TWidget;
   f: RIFunc<string>;
   id, wt: string;
+  iw: IWidget;
 begin
   widget := nil;
   try
@@ -69,14 +77,37 @@ begin
     f := RIConstructor.Func<string>(TypeInfo(TWidget), 'WidgetType');
     wt := f(widget);
     WriteLn(wt);
+
+    iw := TRoundWidget.Create('abc');
+
+    f := RIConstructor.PropGetter<string>(TypeInfo(IWidget), 'Id');
+    id := f(iw);
   finally
     widget.Free;
   end;
 end;
 
+procedure Test2;
+var
+  widget: IWidget;
+  f: RIFunc<string>;
+  id, wt: string;
+begin
+  widget := TRoundWidget.Create('abc');
+
+  f := RIConstructor.PropGetter<string>(TypeInfo(IWidget), 'Id');
+  id := f(widget);
+  WriteLn(id);
+
+  f := RIConstructor.Func<string>(TypeInfo(IWidget), 'WidgetType');
+  wt := f(widget);
+  WriteLn(wt);
+end;
+
 procedure RunTests;
 begin
   Test1;
+  Test2;
 end;
 
 end.
