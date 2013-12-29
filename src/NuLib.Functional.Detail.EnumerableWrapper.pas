@@ -10,11 +10,13 @@ uses
 type
   TEnumeratorWrapper<T> = class(TInterfacedObject, IEnumeratorImpl<T>)
   private
-    FEnumeratorInstance: TObject;
+    FEnumeratorInstance: pointer;
+    FEnumeratorLifetime: IInterface;
     FMoveNextMethod: NuLib.RuntimeInvocation.RIFunc<boolean>;
     FGetCurrentProperty: NuLib.RuntimeInvocation.RIFunc<T>;
   public
-    constructor Create(const EnumeratorInstance: TObject;
+    constructor Create(const EnumeratorInstance: pointer;
+      const EnumeratorLifetime: IInterface;
       const MoveNextMethod: NuLib.RuntimeInvocation.RIFunc<boolean>;
       const GetCurrentProperty: NuLib.RuntimeInvocation.RIFunc<T>);
 
@@ -22,10 +24,11 @@ type
     function MoveNext: Boolean;
   end;
 
-  TEnumerableWrapper<E: class; T> = class(TInterfacedObject, IEnumerableImpl<T>)
+  TEnumerableWrapper<E; T> = class(TInterfacedObject, IEnumerableImpl<T>)
   private
     FEnumerableObj: E;
     FGetEnumeratorInstanceMethod: NuLib.RuntimeInvocation.RIFunc<TObject>;
+    FGetEnumeratorInterfaceMethod: NuLib.RuntimeInvocation.RIFunc<IInterface>;
     FMoveNextMethod: NuLib.RuntimeInvocation.RIFunc<boolean>;
     FGetCurrentProperty: NuLib.RuntimeInvocation.RIFunc<T>;
 
@@ -39,17 +42,19 @@ type
 implementation
 
 uses
-  System.SysUtils;
+  System.SysUtils, System.TypInfo;
 
 { TEnumeratorWrapper<T> }
 
-constructor TEnumeratorWrapper<T>.Create(const EnumeratorInstance: TObject;
+constructor TEnumeratorWrapper<T>.Create(const EnumeratorInstance: pointer;
+  const EnumeratorLifetime: IInterface;
   const MoveNextMethod: NuLib.RuntimeInvocation.RIFunc<boolean>;
   const GetCurrentProperty: NuLib.RuntimeInvocation.RIFunc<T>);
 begin
   inherited Create;
 
   FEnumeratorInstance := EnumeratorInstance;
+  FEnumeratorLifetime := EnumeratorLifetime;
   FMoveNextMethod := MoveNextMethod;
   FGetCurrentProperty := GetCurrentProperty;
 end;
@@ -77,51 +82,75 @@ end;
 function TEnumerableWrapper<E, T>.GetEnumerator: IEnumeratorImpl<T>;
 var
   enumeratorInstance: TObject;
+  enumeratorInterface: IInterface;
+  enumerator: pointer;
 begin
-  enumeratorInstance := FGetEnumeratorInstanceMethod(FEnumerableObj);
+  enumerator := nil;
+  enumeratorInterface := nil;
+  if Assigned(FGetEnumeratorInstanceMethod) then
+  begin
+    enumeratorInstance := FGetEnumeratorInstanceMethod(FEnumerableObj);
+    enumerator := pointer(enumeratorInstance);
+  end;
+  if Assigned(FGetEnumeratorInterfaceMethod) then
+  begin
+    enumeratorInterface := FGetEnumeratorInterfaceMethod(FEnumerableObj);
+    enumerator := pointer(enumeratorInterface);
+  end;
 
-  result := TEnumeratorWrapper<T>.Create(enumeratorInstance, FMoveNextMethod, FGetCurrentProperty);
+  Assert(Assigned(enumerator), 'Logic error in TEnumerableWrapper.GetEnumerator');
+
+  result := TEnumeratorWrapper<T>.Create(enumerator, enumeratorInterface, FMoveNextMethod, FGetCurrentProperty);
 end;
 
 procedure TEnumerableWrapper<E, T>.Wrap;
 var
   ctx: TRttiContext;
   typ, enumeratorType: TRttiType;
-  getEnumMethod, moveNextMethod: TRttiMethod;
+  getEnumMethod, moveNextMethod, getCurrentMethod: TRttiMethod;
   enumeratorObjImpl: TObject;
   currentProperty: TRttiProperty;
-  codeAddress: pointer;
 begin
   ctx := TRttiContext.Create;
 
   typ := ctx.GetType(TypeInfo(E));
   if not Assigned(typ) then
-    raise EInvalidOpException.Create('Enumerable<T>.Wrap: Class "' + E.ClassName + '" does not support enumeration');
+    raise EInvalidOpException.Create('Enumerable<T>.Wrap: Type "' + typ.Name + '" does not support enumeration');
 
   getEnumMethod := typ.GetMethod('GetEnumerator');
   if not Assigned(getEnumMethod) then
-    raise EInvalidOpException.Create('Enumerable<T>.Wrap: Class "' + E.ClassName + '" does not support enumeration');
+    raise EInvalidOpException.Create('Enumerable<T>.Wrap: Type "' + typ.Name + '" does not support enumeration');
 
   enumeratorType := getEnumMethod.ReturnType;
   if not Assigned(enumeratorType) then
-    raise EInvalidOpException.Create('Enumerable<T>.Wrap: Class "' + E.ClassName + '" does not support enumeration');
+    raise EInvalidOpException.Create('Enumerable<T>.Wrap: Type "' + typ.Name + '" does not support enumeration');
 
   moveNextMethod := enumeratorType.GetMethod('MoveNext');
   if not Assigned(moveNextMethod) then
-    raise EInvalidOpException.Create('Enumerable<T>.Wrap: Class "' + E.ClassName + '" does not support enumeration');
+    raise EInvalidOpException.Create('Enumerable<T>.Wrap: Type "' + typ.Name + '" does not support enumeration');
 
-  currentProperty := enumeratorType.GetProperty('Current');
-  if not Assigned(currentProperty) then
-    raise EInvalidOpException.Create('Enumerable<T>.Wrap: Class "' + E.ClassName + '" does not support enumeration');
-
-  if enumeratorType.IsInstance then
+  if (enumeratorType.TypeKind = tkClass) then
   begin
-    FGetEnumeratorInstanceMethod := RIConstructor<E>.Func<TObject>('GetEnumerator');
+    currentProperty := enumeratorType.GetProperty('Current');
+    if not Assigned(currentProperty) then
+      raise EInvalidOpException.Create('Enumerable<T>.Wrap: Type "' + typ.Name + '" does not support enumeration');
+
+    FGetEnumeratorInstanceMethod := RIConstructor.Func<TObject>(typ.Handle, 'GetEnumerator');
     FMoveNextMethod := RIConstructor.Func<boolean>(enumeratorType.Handle, 'MoveNext');
     FGetCurrentProperty := RIConstructor.PropGetter<T>(enumeratorType.Handle, 'Current');
   end
+  else if (enumeratorType.TypeKind = tkInterface) then
+  begin
+    getCurrentMethod := enumeratorType.GetMethod('GetCurrent');
+    if not Assigned(getCurrentMethod) then
+      raise EInvalidOpException.Create('Enumerable<T>.Wrap: Type "' + typ.Name + '" does not support enumeration');
+
+    FGetEnumeratorInterfaceMethod := RIConstructor.Func<IInterface>(typ.Handle, 'GetEnumerator');
+    FMoveNextMethod := RIConstructor.Func<boolean>(enumeratorType.Handle, 'MoveNext');
+    FGetCurrentProperty := RIConstructor.Func<T>(enumeratorType.Handle, 'GetCurrent');
+  end
   else
-    raise EInvalidOpException.Create('Enumerable<T>.Wrap: Class "' + E.ClassName + '" does not support enumeration');
+    raise EInvalidOpException.Create('Enumerable<T>.Wrap: Type "' + typ.Name + '" does not support enumeration');
 end;
 
 end.

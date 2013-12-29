@@ -117,6 +117,7 @@
         <DCCReference Include="..\src\NuLib.Functional.Detail.EnumerableWrapper.pas"/>
         <DCCReference Include="..\src\NuLib.Functional.Detail.Filter.pas"/>
         <DCCReference Include="..\src\NuLib.Functional.Detail.Aggregate.pas"/>
+        <DCCReference Include="..\src\NuLib.Functional.Detail.Map.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

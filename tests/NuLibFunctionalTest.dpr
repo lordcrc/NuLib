@@ -12,7 +12,8 @@ uses
   NuLib.Functional.Detail in '..\src\NuLib.Functional.Detail.pas',
   NuLib.Functional.Detail.EnumerableWrapper in '..\src\NuLib.Functional.Detail.EnumerableWrapper.pas',
   NuLib.Functional.Detail.Filter in '..\src\NuLib.Functional.Detail.Filter.pas',
-  NuLib.Functional.Detail.Aggregate in '..\src\NuLib.Functional.Detail.Aggregate.pas';
+  NuLib.Functional.Detail.Aggregate in '..\src\NuLib.Functional.Detail.Aggregate.pas',
+  NuLib.Functional.Detail.Map in '..\src\NuLib.Functional.Detail.Map.pas';
 
 begin
   try

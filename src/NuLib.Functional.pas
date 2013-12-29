@@ -1,8 +1,23 @@
+//  Copyright 2013 Asbjørn Heid
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+
 unit NuLib.Functional;
 
 interface
 
 uses
+  NuLib.Containers,
   NuLib.Functional.Common,
   NuLib.Functional.Detail;
 
@@ -21,30 +36,24 @@ type
   Enumerable<T> = record
   strict private
     FImpl: NuLib.Functional.Detail.IEnumerableImpl<T>;
+  private
+    property Impl: NuLib.Functional.Detail.IEnumerableImpl<T> read FImpl;
   public
-
     function Aggregate(const AccumulateFunc: Func<T, T, T>): T; overload;
     function Aggregate<TAccumulate>(const InitialValue: TAccumulate; const AccumulateFunc: Func<TAccumulate, T, TAccumulate>): TAccumulate; overload;
-
-    ///	<summary>
-    ///	  Filters a sequence based on the supplied predicate.
-    ///	</summary>
-    ///	<param name="Predicate">
-    ///	  Predicate to test each element in the sequence.
-    ///	</param>
-    ///	<returns>
-    ///	  Returns a sequence containing the elements of the source sequence for
-    ///	  which the predicate returned true.
-    ///	</returns>
-    function Filter(const Predicate: Predicate<T>): Enumerable<T>;
-
 
     ///	<summary>
     ///	  Wraps an enumerable object, that is an object which can be used in
     ///	  for..in.
     ///	</summary>
     ///	<typeparam name="E">
-    ///	  Type of the enumerable object.
+    ///	  <para>
+    ///	    Type of the enumerable object.
+    ///	  </para>
+    ///	  <para>
+    ///	    If E is an interface type then E be compiled with RTTI, for example
+    ///	    by descending from IInvokable.
+    ///	  </para>
     ///	</typeparam>
     ///	<param name="EnumerableObj">
     ///	  Instance of the enumerable object.
@@ -59,7 +68,7 @@ type
     ///	    Nil the Enumerable&lt;T&gt; instance to release this reference.
     ///	  </para>
     ///	</remarks>
-    class function Wrap<E: class>(const EnumerableObj: E): Enumerable<T>; static;
+    class function Wrap<E>(const EnumerableObj: E): Enumerable<T>; static;
 
     ///	<summary>
     ///	  <para>
@@ -82,12 +91,31 @@ type
     function GetEnumerator: Enumerator<T>; inline;
   end;
 
+  Functional = record
+  public
+    ///	<summary>
+    ///	  Filters a sequence based on the supplied predicate.
+    ///	</summary>
+    ///	<param name="Predicate">
+    ///	  Predicate to test each element in the sequence.
+    ///	</param>
+    ///	<returns>
+    ///	  Returns a sequence containing the elements of the source sequence for
+    ///	  which the predicate returned true.
+    ///	</returns>
+    class function Filter<T>(const Predicate: Predicate<T>; const Source: Enumerable<T>): Enumerable<T>; static;
+
+    class function Map<T, R>(const F: Func<T, R>; const Source: Enumerable<T>): Enumerable<R>; overload; static;
+    class function Map<T1, T2, R>(const F: Func<T1, T2, R>; const Source1: Enumerable<T1>; const Source2: Enumerable<T2>): Enumerable<R>; overload; static;
+  end;
+
 implementation
 
 uses
   System.SysUtils,
   NuLib.Functional.Detail.EnumerableWrapper,
   NuLib.Functional.Detail.Filter,
+  NuLib.Functional.Detail.Map,
   NuLib.Functional.Detail.Aggregate;
 
 { Enumerator<T> }
@@ -120,11 +148,6 @@ begin
   result := AggregateImpl.Compute<T, TAccumulate>(FImpl, InitialValue, AccumulateFunc);
 end;
 
-function Enumerable<T>.Filter(const Predicate: Predicate<T>): Enumerable<T>;
-begin
-  result := TFilterImpl<T>.Create(FImpl, Predicate);
-end;
-
 function Enumerable<T>.GetEnumerator: Enumerator<T>;
 begin
   result := Enumerator<T>.Create(FImpl.GetEnumerator());
@@ -138,6 +161,24 @@ end;
 class function Enumerable<T>.Wrap<E>(const EnumerableObj: E): Enumerable<T>;
 begin
   result := TEnumerableWrapper<E, T>.Create(EnumerableObj);
+end;
+
+{ Functional }
+
+class function Functional.Filter<T>(const Predicate: Predicate<T>; const Source: Enumerable<T>): Enumerable<T>;
+begin
+  result := TFilterImpl<T>.Create(Source.Impl, Predicate);
+end;
+
+class function Functional.Map<T, R>(const F: Func<T, R>; const Source: Enumerable<T>): Enumerable<R>;
+begin
+  result := TMapImpl<T, R>.Create(Source.Impl, F);
+end;
+
+class function Functional.Map<T1, T2, R>(const F: Func<T1, T2, R>; const Source1: Enumerable<T1>;
+  const Source2: Enumerable<T2>): Enumerable<R>;
+begin
+
 end;
 
 end.
