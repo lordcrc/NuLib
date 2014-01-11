@@ -73,7 +73,8 @@ type
 implementation
 
 uses
-  System.SysUtils;
+  System.SysUtils,
+  NuLib.Detail;
 
 { Dictionary<K, V> }
 
