@@ -20,6 +20,7 @@ var
   src: Enumerable<string>;
   s: string;
   pred: Predicate<string>;
+  res: TArray<string>;
 begin
   sl := nil;
   try
@@ -36,7 +37,8 @@ begin
         result := not StartsText('b', s);
       end;
 
-    for s in Functional.Filter<string>(pred, src) do
+    res := Functional.Filter<string>(pred, src).ToArray();
+    for s in res do
     begin
       WriteLn(s);
     end;

@@ -42,6 +42,8 @@ type
     function Aggregate(const AccumulateFunc: Func<T, T, T>): T; overload;
     function Aggregate<TAccumulate>(const InitialValue: TAccumulate; const AccumulateFunc: Func<TAccumulate, T, TAccumulate>): TAccumulate; overload;
 
+    function ToArray(): TArray<T>;
+
     ///	<summary>
     ///	  Wraps an enumerable object, that is an object which can be used in
     ///	  for..in.
@@ -156,6 +158,25 @@ end;
 class operator Enumerable<T>.Implicit(const EnumerableImpl: NuLib.Functional.Detail.IEnumerableImpl<T>): Enumerable<T>;
 begin
   result.FImpl := EnumerableImpl;
+end;
+
+function Enumerable<T>.ToArray: TArray<T>;
+var
+  i: integer;
+  v: T;
+begin
+  i := 0;
+
+  SetLength(result, 4);
+  for v in Impl do
+  begin
+    if Length(result) <= i then
+      SetLength(result, Length(result) * 2);
+
+    result[i] := v;
+    i := i + 1;
+  end;
+  SetLength(result, i);
 end;
 
 class function Enumerable<T>.Wrap<E>(const EnumerableObj: E): Enumerable<T>;
