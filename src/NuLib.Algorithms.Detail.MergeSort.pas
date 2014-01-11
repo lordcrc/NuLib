@@ -8,6 +8,7 @@ uses
 type
   MergeSortImpl<T> = record
   private
+    class procedure InsertionSort(var Items: array of T; const L, R: NativeInt; const Comparer: System.Generics.Defaults.IComparer<T>); static;
     class procedure SplitAndMerge(var Items, Temp: array of T; const L, R: NativeInt; const Comparer: System.Generics.Defaults.IComparer<T>); static;
   public
     class procedure Sort(var Items: array of T; const Comparer: System.Generics.Defaults.IComparer<T>); static;
@@ -16,6 +17,34 @@ type
 implementation
 
 { MergeSortImpl<T> }
+
+class procedure MergeSortImpl<T>.InsertionSort(var Items: array of T; const L, R: NativeInt;
+  const Comparer: System.Generics.Defaults.IComparer<T>);
+var
+  i, j: integer;
+  pL, p0, p1: ^T;
+  temp: T;
+begin
+  pL := @Items[L];
+  for i := L+1 to R-1 do
+  begin
+    temp := Items[i];
+    p1 := @Items[i];
+    while (NativeUInt(p1) > NativeUInt(pL)) do
+    begin
+      p0 := p1;
+      dec(p0);
+
+      if (Comparer.Compare(p0^, temp) <= 0) then
+        break;
+
+      p1^ := p0^;
+      p1 := p0;
+    end;
+    if (p1 <> @Items[i]) then
+      p1^ := temp;
+  end;
+end;
 
 class procedure MergeSortImpl<T>.Sort(var Items: array of T; const Comparer: System.Generics.Defaults.IComparer<T>);
 var
@@ -27,6 +56,8 @@ end;
 
 class procedure MergeSortImpl<T>.SplitAndMerge(var Items, Temp: array of T; const L, R: NativeInt;
   const Comparer: System.Generics.Defaults.IComparer<T>);
+const
+  SMALL_CUTOFF = 8;
 var
   m: NativeInt;
   i0, i1, j: NativeInt;
@@ -34,10 +65,15 @@ var
 begin
   m := (L + R) shr 1;
 
-  if (m - L) > 1 then
-    SplitAndMerge(Items, Temp, L, m, Comparer);
-  if (R - m) > 1 then
-    SplitAndMerge(Items, Temp, m, R, Comparer);
+  if (m - L) > SMALL_CUTOFF then
+    SplitAndMerge(Items, Temp, L, m, Comparer)
+  else if (m - L) > 1 then
+    InsertionSort(Items, L, m, Comparer);
+
+  if (R - m) > SMALL_CUTOFF then
+    SplitAndMerge(Items, Temp, m, R, Comparer)
+  else if (R - m) > 1 then
+    InsertionSort(Items, m, R, Comparer);
 
   // merge into Temp
   //i0 := L;
