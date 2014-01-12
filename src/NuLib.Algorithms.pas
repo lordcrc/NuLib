@@ -21,7 +21,7 @@ uses
 
 class procedure Alg.Sort<T>(var Items: array of T; const Comparer: System.Generics.Defaults.IComparer<T>);
 begin
-  MergeSortImpl<T>.Sort(Items, Comparer);
+  NuLib.Algorithms.Detail.MergeSort.SortImpl<T>.Sort(Items, Comparer);
 end;
 
 class procedure Alg.Sort<T>(var Items: array of T);

@@ -6,12 +6,18 @@ uses
   System.Generics.Defaults;
 
 type
-  MergeSortImpl<T> = record
+  SortImpl<T> = record
   private
-    type TCompareMethod = function(const Left, Right: T): integer of object;
+    type
+      TCompareFunc = function(const Left, Right: T): integer of object;
+      TItemsArray = array[0..0] of T;
+      PItemsArray = ^TItemsArray;
   private
-    class procedure InsertionSort(var Items: array of T; const L, R: NativeInt; const Compare: TCompareMethod); static;
-    class procedure SplitAndMerge(var Items, Temp: array of T; const L, R: NativeInt; const Compare: TCompareMethod); static;
+    Items: PItemsArray;
+    Temp: PItemsArray;
+    Compare: TCompareFunc;
+    procedure InsertionSort(const L, R: NativeInt);
+    procedure SplitAndMerge(const L, R: NativeInt);
   public
     class procedure Sort(var Items: array of T; const Comparer: System.Generics.Defaults.IComparer<T>); static;
   end;
@@ -21,20 +27,19 @@ implementation
 uses
   NuLib.Detail;
 
-{ MergeSortImpl<T> }
+{ SortImpl<T> }
 
-class procedure MergeSortImpl<T>.InsertionSort(var Items: array of T; const L, R: NativeInt;
-  const Compare: TCompareMethod);
+procedure SortImpl<T>.InsertionSort(const L, R: NativeInt);
 var
   i, j: integer;
   pL, p0, p1: ^T;
   temp: T;
 begin
-  pL := @Items[L];
+  pL := @Items^[L];
   for i := L+1 to R-1 do
   begin
-    temp := Items[i];
-    p1 := @Items[i];
+    temp := Items^[i];
+    p1 := @Items^[i];
     while (NativeUInt(p1) > NativeUInt(pL)) do
     begin
       p0 := p1;
@@ -46,25 +51,29 @@ begin
       p1^ := p0^;
       p1 := p0;
     end;
-    if (p1 <> @Items[i]) then
+    if (p1 <> @Items^[i]) then
       p1^ := temp;
   end;
 end;
 
-class procedure MergeSortImpl<T>.Sort(var Items: array of T; const Comparer: System.Generics.Defaults.IComparer<T>);
+class procedure SortImpl<T>.Sort(var Items: array of T; const Comparer: System.Generics.Defaults.IComparer<T>);
 var
   temp: TArray<T>;
-  cmp: TCompareMethod;
+  cmp: TCompareFunc;
+  impl: SortImpl<T>;
 begin
   SetLength(temp, Length(Items));
 
   IntRefToMethPtr(Comparer, cmp, 3);
 
-  SplitAndMerge(Items, temp, 0, Length(Items), cmp);
+  impl.Items := @Items[0];
+  impl.Temp := @temp[0];
+  impl.Compare := cmp;
+
+  impl.SplitAndMerge(0, Length(Items));
 end;
 
-class procedure MergeSortImpl<T>.SplitAndMerge(var Items, Temp: array of T; const L, R: NativeInt;
-  const Compare: TCompareMethod);
+procedure SortImpl<T>.SplitAndMerge(const L, R: NativeInt);
 const
   SMALL_CUTOFF = 8;
 var
@@ -75,21 +84,21 @@ begin
   m := (L + R) shr 1;
 
   if (m - L) > SMALL_CUTOFF then
-    SplitAndMerge(Items, Temp, L, m, Compare)
+    SplitAndMerge(L, m)
   else if (m - L) > 1 then
-    InsertionSort(Items, L, m, Compare);
+    InsertionSort(L, m);
 
   if (R - m) > SMALL_CUTOFF then
-    SplitAndMerge(Items, Temp, m, R, Compare)
+    SplitAndMerge(m, R)
   else if (R - m) > 1 then
-    InsertionSort(Items, m, R, Compare);
+    InsertionSort(m, R);
 
   // merge into Temp
   //i0 := L;
   //i1 := M;
-  pL := @Items[L];
-  pM := @Items[m];
-  pR := @Items[R];
+  pL := @Items^[L];
+  pM := @Items^[m];
+  pR := @Items^[R];
 
   p0 := pL;
   p1 := pM;
@@ -99,19 +108,19 @@ begin
     //if (i0 < M) and ((i1 >= R) or (Comparer.Compare(Items[i0], Items[i1]) <= 0)) then
     if (NativeUInt(p0) < NativeUInt(pM)) and ((NativeUInt(p1) >= NativeUInt(pR)) or (Compare(p0^, p1^) <= 0)) then
     begin
-      Temp[j] := p0^;
+      Temp^[j] := p0^;
       inc(p0);
     end
     else
     begin
-      Temp[j] := p1^;
+      Temp^[j] := p1^;
       inc(p1);
     end;
   end;
 
   // copy back to Items
   for j := L to R-1 do
-    Items[j] := Temp[j];
+    Items^[j] := Temp^[j];
 end;
 
 end.
