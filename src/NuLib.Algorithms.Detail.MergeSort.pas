@@ -10,11 +10,9 @@ type
   private
     type
       TCompareFunc = function(const Left, Right: T): integer of object;
-      TItemsArray = array[0..0] of T;
-      PItemsArray = ^TItemsArray;
   private
-    Items: PItemsArray;
-    Temp: PItemsArray;
+    Items: ^T;
+    Temp: ^T;
     Compare: TCompareFunc;
     procedure InsertionSort(const L, R: NativeInt);
     procedure SplitAndMerge(const L, R: NativeInt);
@@ -27,6 +25,8 @@ implementation
 uses
   NuLib.Detail;
 
+{$POINTERMATH ON}
+
 { SortImpl<T> }
 
 procedure SortImpl<T>.InsertionSort(const L, R: NativeInt);
@@ -35,11 +35,11 @@ var
   pL, p0, p1: ^T;
   temp: T;
 begin
-  pL := @Items^[L];
+  pL := @Items[L];
   for i := L+1 to R-1 do
   begin
-    temp := Items^[i];
-    p1 := @Items^[i];
+    temp := Items[i];
+    p1 := @Items[i];
     while (NativeUInt(p1) > NativeUInt(pL)) do
     begin
       p0 := p1;
@@ -51,7 +51,7 @@ begin
       p1^ := p0^;
       p1 := p0;
     end;
-    if (p1 <> @Items^[i]) then
+    if (p1 <> @Items[i]) then
       p1^ := temp;
   end;
 end;
@@ -94,33 +94,26 @@ begin
     InsertionSort(m, R);
 
   // merge into Temp
-  //i0 := L;
-  //i1 := M;
-  pL := @Items^[L];
-  pM := @Items^[m];
-  pR := @Items^[R];
-
-  p0 := pL;
-  p1 := pM;
+  i0 := L;
+  i1 := M;
 
   for j := L to R-1 do
   begin
-    //if (i0 < M) and ((i1 >= R) or (Comparer.Compare(Items[i0], Items[i1]) <= 0)) then
-    if (NativeUInt(p0) < NativeUInt(pM)) and ((NativeUInt(p1) >= NativeUInt(pR)) or (Compare(p0^, p1^) <= 0)) then
+    if (i0 < M) and ((i1 >= R) or (Compare(Items[i0], Items[i1]) <= 0)) then
     begin
-      Temp^[j] := p0^;
-      inc(p0);
+      Temp[j] := Items[i0];
+      inc(i0);
     end
     else
     begin
-      Temp^[j] := p1^;
-      inc(p1);
+      Temp[j] := Items[i1];
+      inc(i1);
     end;
   end;
 
   // copy back to Items
   for j := L to R-1 do
-    Items^[j] := Temp^[j];
+    Items[j] := Temp[j];
 end;
 
 end.
