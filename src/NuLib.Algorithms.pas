@@ -21,12 +21,12 @@ uses
 
 class procedure Alg.Sort<T>(var Items: array of T; const Comparer: System.Generics.Defaults.IComparer<T>);
 begin
-  NuLib.Algorithms.Detail.MergeSort.SortImpl<T>.Sort(Items, Comparer);
+  NuLib.Algorithms.Detail.Sort<T>.Sort(Items, Comparer);
 end;
 
 class procedure Alg.Sort<T>(var Items: array of T);
 begin
-  Sort<T>(Items, System.Generics.Defaults.TComparer<T>.Default);
+  Alg.Sort<T>(Items, System.Generics.Defaults.TComparer<T>.Default);
 end;
 
 end.

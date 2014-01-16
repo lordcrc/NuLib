@@ -19,6 +19,7 @@ var
   i, e: integer;
 begin
   SetLength(src, 10001);
+  //SetLength(src, 7);
 
   RandSeed := 101;
   for i := 0 to High(src) do
@@ -110,24 +111,26 @@ begin
 end;
 
 procedure Test3;
+type
+  IntType = int64;
 var
-  src, s1, s2: TArray<integer>;
+  src, s1, s2: TArray<IntType>;
   i, e: integer;
   t1, t2: double;
 begin
-  SetLength(src, (1 shl 26) - 1);
+  SetLength(src, (1 shl 24) - 1);
 
   RandSeed := 101;
   for i := 0 to High(src) do
     src[i] := Random(Length(src) shr 4);
 
-  WriteLn('Timing...');
+  WriteLn('Timing integers...');
 
   s1 := Copy(src);
   t1 := ExecTime(
       procedure
       begin
-        TArray.Sort<integer>(s1);
+        TArray.Sort<IntType>(s1);
       end
     );
   WriteLn(Format('Reference: %5.3f', [t1]));
@@ -136,7 +139,7 @@ begin
   t2 := ExecTime(
       procedure
       begin
-        Alg.Sort<integer>(s2);
+        Alg.Sort<IntType>(s2);
       end
     );
   WriteLn(Format('Alg.Sort: %5.3f', [t2]));
@@ -157,11 +160,125 @@ begin
   end;
 end;
 
+procedure Test4;
+var
+  src, s1, s2: TArray<string>;
+  i, e: integer;
+  t1, t2: double;
+begin
+  SetLength(src, (1 shl 21) - 1);
+
+  RandSeed := 101;
+  for i := 0 to High(src) do
+    src[i] := IntToStr(Random(Length(src) shr 4));
+
+  WriteLn('Timing strings...');
+
+  s1 := Copy(src);
+  t1 := ExecTime(
+      procedure
+      begin
+        TArray.Sort<string>(s1);
+      end
+    );
+  WriteLn(Format('Reference: %5.3f', [t1]));
+
+  s2 := Copy(src);
+  t2 := ExecTime(
+      procedure
+      begin
+        Alg.Sort<string>(s2);
+      end
+    );
+  WriteLn(Format('Alg.Sort: %5.3f', [t2]));
+
+  e := 0;
+  for i := 0 to High(src) do
+  begin
+    if s1[i] = s2[i] then
+      continue;
+
+    e := e + 1;
+  end;
+
+  if e <> 0 then
+  begin
+    WriteLn('NOT EQUAL');
+    exit;
+  end;
+end;
+
+procedure Test5;
+type
+  TStruct = record
+    key: integer;
+    value: string;
+    payload: array[0..15] of UInt8;
+  end;
+var
+  src, s1, s2: TArray<TStruct>;
+  cmp: System.Generics.Defaults.IComparer<TStruct>;
+  i, e: integer;
+  t1, t2: double;
+begin
+  SetLength(src, (1 shl 21) - 1);
+
+  RandSeed := 101;
+  for i := 0 to High(src) do
+  begin
+    src[i].key := Random(Length(src) shr 4);
+    src[i].value := IntToStr(src[i].key);
+  end;
+
+  cmp := TDelegatedComparer<TStruct>.Create(
+      function (const Left, Right: TStruct): integer
+      begin
+        result := Right.key - Left.key;
+      end
+    );
+
+  WriteLn('Timing struct...');
+
+  s1 := Copy(src);
+  t1 := ExecTime(
+      procedure
+      begin
+        TArray.Sort<TStruct>(s1);
+      end
+    );
+  WriteLn(Format('Reference: %5.3f', [t1]));
+
+  s2 := Copy(src);
+  t2 := ExecTime(
+      procedure
+      begin
+        Alg.Sort<TStruct>(s2);
+      end
+    );
+  WriteLn(Format('Alg.Sort: %5.3f', [t2]));
+
+  e := 0;
+  for i := 0 to High(src) do
+  begin
+    if s1[i].key = s2[i].key then
+      continue;
+
+    e := e + 1;
+  end;
+
+  if e <> 0 then
+  begin
+    WriteLn('NOT EQUAL');
+    exit;
+  end;
+end;
 procedure RunTests;
 begin
   Test1;
   Test2;
   Test3;
+  Test4;
+  Test5;
 end;
 
 end.
