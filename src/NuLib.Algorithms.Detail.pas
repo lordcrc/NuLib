@@ -3,11 +3,11 @@ unit NuLib.Algorithms.Detail;
 interface
 
 uses
-  System.Generics.Defaults;
+  NuLib.Common;
 
 type
   Sort<T> = record
-    class procedure Sort(var Items: array of T; const Comparer: System.Generics.Defaults.IComparer<T>); static;
+    class procedure Sort(var Items: array of T; const Comparer: NuLib.Common.IComparer<T>); static;
   end;
 
 function IsNativeType(const TypInfo: pointer): boolean;
@@ -25,7 +25,7 @@ end;
 
 { Sort<T> }
 
-class procedure Sort<T>.Sort(var Items: array of T; const Comparer: System.Generics.Defaults.IComparer<T>);
+class procedure Sort<T>.Sort(var Items: array of T; const Comparer: NuLib.Common.IComparer<T>);
 begin
   if IsNativeType(TypeInfo(T)) then
 //  if false then

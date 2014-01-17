@@ -2,6 +2,10 @@ unit NuLib.Functional.Detail;
 
 interface
 
+uses
+  NuLib.Containers.Common,
+  NuLib.Functional.Common;
+
 type
   IEnumeratorImpl<T> = interface
     function GetCurrent: T;
@@ -14,6 +18,9 @@ type
     function GetEnumerator: IEnumeratorImpl<T>;
   end;
 
+  IOrderedEnumerableImpl<T> = interface(IEnumerableImpl<T>)
+    function Instance: TObject;
+  end;
 
 implementation
 

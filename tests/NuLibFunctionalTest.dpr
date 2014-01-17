@@ -13,7 +13,10 @@ uses
   NuLib.Functional.Detail.EnumerableWrapper in '..\src\NuLib.Functional.Detail.EnumerableWrapper.pas',
   NuLib.Functional.Detail.Filter in '..\src\NuLib.Functional.Detail.Filter.pas',
   NuLib.Functional.Detail.Aggregate in '..\src\NuLib.Functional.Detail.Aggregate.pas',
-  NuLib.Functional.Detail.Map in '..\src\NuLib.Functional.Detail.Map.pas';
+  NuLib.Functional.Detail.Map in '..\src\NuLib.Functional.Detail.Map.pas',
+  NuLib.Functional.Detail.OrderedEnumerable in '..\src\NuLib.Functional.Detail.OrderedEnumerable.pas',
+  NuLib.Common in '..\src\NuLib.Common.pas',
+  NuLib.Detail in '..\src\NuLib.Detail.pas';
 
 begin
   try

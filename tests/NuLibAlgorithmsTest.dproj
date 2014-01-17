@@ -114,6 +114,7 @@
         <DCCReference Include="..\src\NuLib.Algorithms.pas"/>
         <DCCReference Include="..\src\NuLib.Algorithms.Detail.pas"/>
         <DCCReference Include="..\src\NuLib.Algorithms.Detail.MergeSort.pas"/>
+        <DCCReference Include="..\src\NuLib.Common.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

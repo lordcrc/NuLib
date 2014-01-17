@@ -3,7 +3,7 @@ unit NuLib.Algorithms.Detail.MergeSort;
 interface
 
 uses
-  System.Generics.Defaults;
+  NuLib.Common;
 
 type
   SortImpl<T> = record
@@ -17,7 +17,7 @@ type
     procedure InsertionSort(const L, R: NativeInt);
     procedure SplitAndMerge(const L, R: NativeInt);
   public
-    class procedure Sort(var Items: array of T; const Comparer: System.Generics.Defaults.IComparer<T>); static;
+    class procedure Sort(var Items: array of T; const Comparer: NuLib.Common.IComparer<T>); static;
   end;
 
   SortImplMove<T> = record
@@ -31,7 +31,7 @@ type
     procedure InsertionSort(const L, R: NativeInt);
     procedure SplitAndMerge(const L, R: NativeInt);
   public
-    class procedure Sort(var Items: array of T; const Comparer: System.Generics.Defaults.IComparer<T>); static;
+    class procedure Sort(var Items: array of T; const Comparer: NuLib.Common.IComparer<T>); static;
   end;
 
 procedure LocalMove(const Source; var Dest; Count: NativeInt); inline;
@@ -106,7 +106,7 @@ begin
   end;
 end;
 
-class procedure SortImpl<T>.Sort(var Items: array of T; const Comparer: System.Generics.Defaults.IComparer<T>);
+class procedure SortImpl<T>.Sort(var Items: array of T; const Comparer: NuLib.Common.IComparer<T>);
 var
   temp: TArray<T>;
   cmp: TCompareFunc;
@@ -202,7 +202,7 @@ begin
   end;
 end;
 
-class procedure SortImplMove<T>.Sort(var Items: array of T; const Comparer: System.Generics.Defaults.IComparer<T>);
+class procedure SortImplMove<T>.Sort(var Items: array of T; const Comparer: NuLib.Common.IComparer<T>);
 var
   temp: TArray<T>;
   cmp: TCompareFunc;

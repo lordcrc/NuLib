@@ -17,7 +17,7 @@ unit NuLib.Functional;
 interface
 
 uses
-  NuLib.Containers,
+  NuLib.Common,
   NuLib.Functional.Common,
   NuLib.Functional.Detail;
 
@@ -33,6 +33,35 @@ type
     property Current: T read GetCurrent;
   end;
 
+  OrderedEnumerable<T> = record
+  strict private
+    FImpl: NuLib.Functional.Detail.IOrderedEnumerableImpl<T>;
+  private
+    property Impl: NuLib.Functional.Detail.IOrderedEnumerableImpl<T> read FImpl;
+  public
+    function ThenBy<K>(const KeySelector: Func<T, K>): OrderedEnumerable<T>;
+
+    ///	<summary>
+    ///	  <para>
+    ///	    Used to assign nil to the enumerable instance, freeing internal
+    ///	    references such as to wrapped objects.
+    ///	  </para>
+    ///	  <para>
+    ///	    Other uses are internal only.
+    ///	  </para>
+    ///	</summary>
+    ///	<param name="EnumerableImpl">
+    ///	  Pass nil.
+    ///	</param>
+    ///	<returns>
+    ///	  An enumerable instance with no associated implementation. Do not use
+    ///	  the returned instance.
+    ///	</returns>
+    class operator Implicit(const OrderedEnumerableImpl: NuLib.Functional.Detail.IOrderedEnumerableImpl<T>): OrderedEnumerable<T>;
+
+    function GetEnumerator: Enumerator<T>; inline;
+  end;
+
   Enumerable<T> = record
   strict private
     FImpl: NuLib.Functional.Detail.IEnumerableImpl<T>;
@@ -41,6 +70,8 @@ type
   public
     function Aggregate(const AccumulateFunc: Func<T, T, T>): T; overload;
     function Aggregate<TAccumulate>(const InitialValue: TAccumulate; const AccumulateFunc: Func<TAccumulate, T, TAccumulate>): TAccumulate; overload;
+
+    function OrderBy<K>(const KeySelector: Func<T, K>): OrderedEnumerable<T>;
 
     function ToArray(): TArray<T>;
 
@@ -90,6 +121,8 @@ type
     ///	</returns>
     class operator Implicit(const EnumerableImpl: NuLib.Functional.Detail.IEnumerableImpl<T>): Enumerable<T>;
 
+    class operator Implicit(const OrderedEnum: OrderedEnumerable<T>): Enumerable<T>;
+
     function GetEnumerator: Enumerator<T>; inline;
   end;
 
@@ -116,6 +149,7 @@ implementation
 uses
   System.SysUtils,
   NuLib.Functional.Detail.EnumerableWrapper,
+  NuLib.Functional.Detail.OrderedEnumerable,
   NuLib.Functional.Detail.Filter,
   NuLib.Functional.Detail.Map,
   NuLib.Functional.Detail.Aggregate;
@@ -137,27 +171,60 @@ begin
   result := FImpl.MoveNext;
 end;
 
+{ OrderedEnumerable<T> }
+
+function OrderedEnumerable<T>.GetEnumerator: Enumerator<T>;
+begin
+  result := Enumerator<T>.Create(Impl.GetEnumerator());
+end;
+
+class operator OrderedEnumerable<T>.Implicit(
+  const OrderedEnumerableImpl: NuLib.Functional.Detail.IOrderedEnumerableImpl<T>): OrderedEnumerable<T>;
+begin
+  result.FImpl := OrderedEnumerableImpl;
+end;
+
+function OrderedEnumerable<T>.ThenBy<K>(const KeySelector: Func<T, K>): OrderedEnumerable<T>;
+var
+  orderedImpl: TOrderedEnumerable<T>;
+begin
+  orderedImpl := Impl.Instance as TOrderedEnumerable<T>;
+  orderedImpl.AddOrdering<K>(KeySelector, Comparer<K>.Default, false);
+  result := Self;
+end;
+
 { Enumerable<T> }
 
 function Enumerable<T>.Aggregate(const AccumulateFunc: Func<T, T, T>): T;
 begin
-  result := AggregateImpl.Compute<T>(FImpl, AccumulateFunc);
+  result := AggregateImpl.Compute<T>(Impl, AccumulateFunc);
 end;
 
 function Enumerable<T>.Aggregate<TAccumulate>(const InitialValue: TAccumulate;
   const AccumulateFunc: Func<TAccumulate, T, TAccumulate>): TAccumulate;
 begin
-  result := AggregateImpl.Compute<T, TAccumulate>(FImpl, InitialValue, AccumulateFunc);
+  result := AggregateImpl.Compute<T, TAccumulate>(Impl, InitialValue, AccumulateFunc);
 end;
 
 function Enumerable<T>.GetEnumerator: Enumerator<T>;
 begin
-  result := Enumerator<T>.Create(FImpl.GetEnumerator());
+  result := Enumerator<T>.Create(Impl.GetEnumerator());
+end;
+
+class operator Enumerable<T>.Implicit(const OrderedEnum: OrderedEnumerable<T>): Enumerable<T>;
+begin
+  result.FImpl := OrderedEnum.Impl;
 end;
 
 class operator Enumerable<T>.Implicit(const EnumerableImpl: NuLib.Functional.Detail.IEnumerableImpl<T>): Enumerable<T>;
 begin
   result.FImpl := EnumerableImpl;
+end;
+
+function Enumerable<T>.OrderBy<K>(const KeySelector: Func<T, K>): OrderedEnumerable<T>;
+begin
+  result := TOrderedEnumerable<T>.Create(Impl);
+  result.ThenBy<K>(KeySelector); // workaround
 end;
 
 function Enumerable<T>.ToArray: TArray<T>;

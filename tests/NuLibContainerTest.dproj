@@ -137,6 +137,7 @@
         <DCCReference Include="..\src\NuLib.Containers.Detail.pas"/>
         <DCCReference Include="..\src\NuLib.Containers.pas"/>
         <DCCReference Include="NuLib.Containers.Test.pas"/>
+        <DCCReference Include="..\src\NuLib.Common.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

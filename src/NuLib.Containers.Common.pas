@@ -2,6 +2,9 @@ unit NuLib.Containers.Common;
 
 interface
 
+uses
+  System.Generics.Defaults;
+
 type
   IEqualityComparer<T> = interface
     function Equals(const Left, Right: T): Boolean;

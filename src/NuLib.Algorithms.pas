@@ -3,11 +3,13 @@ unit NuLib.Algorithms;
 interface
 
 uses
-  System.Generics.Defaults;
+  System.Generics.Defaults,
+  NuLib.Common;
 
 type
   Alg = record
     class procedure Sort<T>(var Items: array of T; const Comparer: System.Generics.Defaults.IComparer<T>); overload; static;
+    class procedure Sort<T>(var Items: array of T; const Comparer: NuLib.Common.IComparer<T>); overload; static;
     class procedure Sort<T>(var Items: array of T); overload; static;
   end;
 
@@ -20,6 +22,11 @@ uses
 { Alg }
 
 class procedure Alg.Sort<T>(var Items: array of T; const Comparer: System.Generics.Defaults.IComparer<T>);
+begin
+  NuLib.Algorithms.Detail.Sort<T>.Sort(Items, ComparerWrapper<T>.Create(Comparer));
+end;
+
+class procedure Alg.Sort<T>(var Items: array of T; const Comparer: NuLib.Common.IComparer<T>);
 begin
   NuLib.Algorithms.Detail.Sort<T>.Sort(Items, Comparer);
 end;

@@ -12,7 +12,8 @@ uses
   NuLib.Containers.Detail.OpenAddressingSeparate in '..\src\NuLib.Containers.Detail.OpenAddressingSeparate.pas',
   NuLib.Containers.Detail in '..\src\NuLib.Containers.Detail.pas',
   NuLib.Containers in '..\src\NuLib.Containers.pas',
-  NuLib.Containers.Test in 'NuLib.Containers.Test.pas';
+  NuLib.Containers.Test in 'NuLib.Containers.Test.pas',
+  NuLib.Common in '..\src\NuLib.Common.pas';
 
 begin
   try
