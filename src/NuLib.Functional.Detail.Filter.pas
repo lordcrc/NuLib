@@ -20,6 +20,8 @@ type
     function MoveNext: Boolean;
 
     // Enumerable
+    function HasCount: boolean;
+    function GetCount: NativeInt;
     function GetEnumerator: IEnumeratorImpl<T>;
   end;
 
@@ -35,6 +37,11 @@ begin
   FPredicate := Predicate;
 end;
 
+function TFilterImpl<T>.GetCount: NativeInt;
+begin
+  Assert(False, 'Not implemented');
+end;
+
 function TFilterImpl<T>.GetCurrent: T;
 begin
   result := FSrcEnumerator.Current;
@@ -44,6 +51,11 @@ function TFilterImpl<T>.GetEnumerator: IEnumeratorImpl<T>;
 begin
   FSrcEnumerator := FSrc.GetEnumerator();
   result := Self;
+end;
+
+function TFilterImpl<T>.HasCount: boolean;
+begin
+  result := False;
 end;
 
 function TFilterImpl<T>.MoveNext: Boolean;

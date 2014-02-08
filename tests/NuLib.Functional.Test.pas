@@ -189,7 +189,7 @@ begin
     sl := TStringList.Create;
     sl.Add('b.1');
     sl.Add('b.3');
-    sl.Add('d.5');
+    sl.Add('c.5');
     sl.Add('a.1');
     sl.Add('b.2');
 
@@ -235,7 +235,7 @@ begin
   result := (ft - st) / f;
 end;
 
-procedure Test6;
+procedure Test5s;
 var
   sl, slt: TStringList;
   src: Enumerable<string>;
@@ -344,13 +344,115 @@ begin
   end;
 end;
 
+procedure Test6;
+var
+  sl: TStringList;
+  src: Enumerable<string>;
+  list: Enumerable<string>;
+  ks1: Func<string, string>;
+  ks2: Func<string, integer>;
+  pred: Predicate<string>;
+  s: string;
+begin
+  sl := nil;
+  try
+    sl := TStringList.Create;
+    sl.Add('b.1');
+    sl.Add('b.3');
+    sl.Add('c.5');
+    sl.Add('a.1');
+    sl.Add('b.2');
+
+    // wrap stringlist
+    src := Enumerable<string>.Wrap(sl);
+
+    ks1 :=
+      function(const s: string): string
+      begin
+        result := Copy(s, 1, 1);
+      end;
+    ks2 :=
+      function(const s: string): integer
+      begin
+        result := StrToInt(Copy(s, 3, 1));
+      end;
+
+    pred :=
+      function(const s: string): boolean
+      begin
+        result := StrToInt(Copy(s, 3, 1)) <> 1;
+      end;
+
+    list := src.Where(pred).OrderBy<string>(ks1).ThenBy<integer>(ks2);
+
+    for s in list do
+    begin
+      WriteLn(s);
+    end;
+  finally
+    // release reference to the stringlist
+    src := nil;
+    sl.Free;
+  end;
+end;
+
+procedure Test7;
+var
+  data: TArray<string>;
+  src: Enumerable<string>;
+  s: string;
+  pred: Predicate<string>;
+  res: TArray<string>;
+begin
+  data := nil;
+  try
+    SetLength(data, 3);
+    data[0] := 'aaa';
+    data[1] := 'bbb';
+    data[2] := 'ccc';
+
+    src := Enumerable<string>.Wrap(data);
+
+    pred :=
+      function(const s: string): boolean
+      begin
+        result := not StartsText('b', s);
+      end;
+
+    res := Functional.Filter<string>(pred, src).ToArray();
+    for s in res do
+    begin
+      WriteLn(s);
+    end;
+  finally
+    src := nil;
+    data := nil;
+  end;
+end;
+
 procedure RunTests;
 begin
   Test1;
+  WriteLn;
+
   Test2;
+  WriteLn;
+
   Test3;
+  WriteLn;
+
   Test4;
+  WriteLn;
+
+  Test5;
+  //Test5s;
+  WriteLn;
+
   Test6;
+  WriteLn;
+
+  Test7;
+  WriteLn;
 end;
 
 end.

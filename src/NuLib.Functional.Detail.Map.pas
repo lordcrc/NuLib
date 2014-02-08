@@ -20,6 +20,8 @@ type
     function MoveNext: Boolean;
 
     // Enumerable
+    function HasCount: boolean;
+    function GetCount: NativeInt;
     function GetEnumerator: IEnumeratorImpl<R>;
   end;
 
@@ -35,6 +37,11 @@ begin
   FFunc := F;
 end;
 
+function TMapImpl<T, R>.GetCount: NativeInt;
+begin
+  Assert(False, 'Not implemented');
+end;
+
 function TMapImpl<T, R>.GetCurrent: R;
 begin
   result := FFunc(FSrcEnumerator.Current);
@@ -44,6 +51,11 @@ function TMapImpl<T, R>.GetEnumerator: IEnumeratorImpl<R>;
 begin
   FSrcEnumerator := FSrc.GetEnumerator();
   result := Self;
+end;
+
+function TMapImpl<T, R>.HasCount: boolean;
+begin
+  result := False;
 end;
 
 function TMapImpl<T, R>.MoveNext: Boolean;

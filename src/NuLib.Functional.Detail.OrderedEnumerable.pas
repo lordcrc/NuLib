@@ -29,6 +29,9 @@ type
 
     procedure AddOrdering<K>(const KeySelector: Func<T, K>; const Comparer: IComparer<K>; Descending: boolean);
 
+    function HasCount: boolean;
+    function GetCount: NativeInt;
+
     function Instance: TObject;
     function GetEnumerator: IEnumeratorImpl<T>;
   end;
@@ -105,6 +108,11 @@ begin
   FSrc := Src;
 end;
 
+function TOrderedEnumerable<T>.GetCount: NativeInt;
+begin
+  result := FSrc.Count;
+end;
+
 function TOrderedEnumerable<T>.GetEnumerator: IEnumeratorImpl<T>;
 var
   i: NativeInt;
@@ -125,6 +133,11 @@ begin
   Alg.Sort<T>(elms, FElementComparer);
 
   result := TOrderedEnumerator<T>.Create(elms);
+end;
+
+function TOrderedEnumerable<T>.HasCount: boolean;
+begin
+  result := FSrc.HasCount;
 end;
 
 function TOrderedEnumerable<T>.Instance: TObject;

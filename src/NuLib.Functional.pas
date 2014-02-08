@@ -33,45 +33,50 @@ type
     property Current: T read GetCurrent;
   end;
 
-  OrderedEnumerable<T> = record
-  strict private
-    FImpl: NuLib.Functional.Detail.IOrderedEnumerableImpl<T>;
-  private
-    property Impl: NuLib.Functional.Detail.IOrderedEnumerableImpl<T> read FImpl;
-  public
-    function ThenBy<K>(const KeySelector: Func<T, K>): OrderedEnumerable<T>;
-
-    ///	<summary>
-    ///	  <para>
-    ///	    Used to assign nil to the enumerable instance, freeing internal
-    ///	    references such as to wrapped objects.
-    ///	  </para>
-    ///	  <para>
-    ///	    Other uses are internal only.
-    ///	  </para>
-    ///	</summary>
-    ///	<param name="EnumerableImpl">
-    ///	  Pass nil.
-    ///	</param>
-    ///	<returns>
-    ///	  An enumerable instance with no associated implementation. Do not use
-    ///	  the returned instance.
-    ///	</returns>
-    class operator Implicit(const OrderedEnumerableImpl: NuLib.Functional.Detail.IOrderedEnumerableImpl<T>): OrderedEnumerable<T>;
-
-    function GetEnumerator: Enumerator<T>; inline;
-  end;
-
   Enumerable<T> = record
   strict private
     FImpl: NuLib.Functional.Detail.IEnumerableImpl<T>;
   private
     property Impl: NuLib.Functional.Detail.IEnumerableImpl<T> read FImpl;
   public
+    // nested type since records cannot be forward declared
+    type OrderedEnumerable = record
+      strict private
+        FImpl: NuLib.Functional.Detail.IOrderedEnumerableImpl<T>;
+      private
+        property Impl: NuLib.Functional.Detail.IOrderedEnumerableImpl<T> read FImpl;
+      public
+        function ThenBy<K>(const KeySelector: Func<T, K>): OrderedEnumerable; inline;
+
+        //function Where(const Predicate: Predicate<T>): Enumerable<T>; inline;
+
+        ///	<summary>
+        ///	  <para>
+        ///	    Used to assign nil to the enumerable instance, freeing internal
+        ///	    references such as to wrapped objects.
+        ///	  </para>
+        ///	  <para>
+        ///	    Other uses are internal only.
+        ///	  </para>
+        ///	</summary>
+        ///	<param name="EnumerableImpl">
+        ///	  Pass nil.
+        ///	</param>
+        ///	<returns>
+        ///	  An enumerable instance with no associated implementation. Do not use
+        ///	  the returned instance.
+        ///	</returns>
+        class operator Implicit(const OrderedEnumerableImpl: NuLib.Functional.Detail.IOrderedEnumerableImpl<T>): OrderedEnumerable; inline;
+
+        function GetEnumerator: Enumerator<T>; inline;
+      end;
+  public
     function Aggregate(const AccumulateFunc: Func<T, T, T>): T; overload;
     function Aggregate<TAccumulate>(const InitialValue: TAccumulate; const AccumulateFunc: Func<TAccumulate, T, TAccumulate>): TAccumulate; overload;
 
-    function OrderBy<K>(const KeySelector: Func<T, K>): OrderedEnumerable<T>;
+    function OrderBy<K>(const KeySelector: Func<T, K>): OrderedEnumerable; inline;
+
+    function Where(const Predicate: Predicate<T>): Enumerable<T>; inline;
 
     function ToArray(): TArray<T>;
 
@@ -119,9 +124,9 @@ type
     ///	  An enumerable instance with no associated implementation. Do not use
     ///	  the returned instance.
     ///	</returns>
-    class operator Implicit(const EnumerableImpl: NuLib.Functional.Detail.IEnumerableImpl<T>): Enumerable<T>;
+    class operator Implicit(const EnumerableImpl: NuLib.Functional.Detail.IEnumerableImpl<T>): Enumerable<T>; inline;
 
-    class operator Implicit(const OrderedEnum: OrderedEnumerable<T>): Enumerable<T>;
+    class operator Implicit(const OrderedEnum: OrderedEnumerable): Enumerable<T>; inline;
 
     function GetEnumerator: Enumerator<T>; inline;
   end;
@@ -171,28 +176,6 @@ begin
   result := FImpl.MoveNext;
 end;
 
-{ OrderedEnumerable<T> }
-
-function OrderedEnumerable<T>.GetEnumerator: Enumerator<T>;
-begin
-  result := Enumerator<T>.Create(Impl.GetEnumerator());
-end;
-
-class operator OrderedEnumerable<T>.Implicit(
-  const OrderedEnumerableImpl: NuLib.Functional.Detail.IOrderedEnumerableImpl<T>): OrderedEnumerable<T>;
-begin
-  result.FImpl := OrderedEnumerableImpl;
-end;
-
-function OrderedEnumerable<T>.ThenBy<K>(const KeySelector: Func<T, K>): OrderedEnumerable<T>;
-var
-  orderedImpl: TOrderedEnumerable<T>;
-begin
-  orderedImpl := Impl.Instance as TOrderedEnumerable<T>;
-  orderedImpl.AddOrdering<K>(KeySelector, Comparer<K>.Default, false);
-  result := Self;
-end;
-
 { Enumerable<T> }
 
 function Enumerable<T>.Aggregate(const AccumulateFunc: Func<T, T, T>): T;
@@ -211,7 +194,7 @@ begin
   result := Enumerator<T>.Create(Impl.GetEnumerator());
 end;
 
-class operator Enumerable<T>.Implicit(const OrderedEnum: OrderedEnumerable<T>): Enumerable<T>;
+class operator Enumerable<T>.Implicit(const OrderedEnum: OrderedEnumerable): Enumerable<T>;
 begin
   result.FImpl := OrderedEnum.Impl;
 end;
@@ -221,7 +204,7 @@ begin
   result.FImpl := EnumerableImpl;
 end;
 
-function Enumerable<T>.OrderBy<K>(const KeySelector: Func<T, K>): OrderedEnumerable<T>;
+function Enumerable<T>.OrderBy<K>(const KeySelector: Func<T, K>): OrderedEnumerable;
 begin
   result := TOrderedEnumerable<T>.Create(Impl);
   result.ThenBy<K>(KeySelector); // workaround
@@ -232,24 +215,75 @@ var
   i: integer;
   v: T;
 begin
-  i := 0;
-
-  SetLength(result, 4);
-  for v in Impl do
+  if (Impl.HasCount) then
   begin
-    if Length(result) <= i then
-      SetLength(result, Length(result) * 2);
+    i := 0;
 
-    result[i] := v;
-    i := i + 1;
+    SetLength(result, Impl.Count);
+    for v in Impl do
+    begin
+      result[i] := v;
+      i := i + 1;
+    end;
+  end
+  else
+  begin
+    i := 0;
+
+    SetLength(result, 4);
+    for v in Impl do
+    begin
+      if Length(result) <= i then
+        SetLength(result, (Length(result) * 3) div 2);
+
+      result[i] := v;
+      i := i + 1;
+    end;
+    SetLength(result, i);
   end;
-  SetLength(result, i);
+end;
+
+function Enumerable<T>.Where(const Predicate: Predicate<T>): Enumerable<T>;
+begin
+  result := TFilterImpl<T>.Create(Impl, Predicate);
 end;
 
 class function Enumerable<T>.Wrap<E>(const EnumerableObj: E): Enumerable<T>;
 begin
   result := TEnumerableWrapper<E, T>.Create(EnumerableObj);
 end;
+
+{ Enumerable<T>.OrderedEnumerable }
+
+function Enumerable<T>.OrderedEnumerable.GetEnumerator: Enumerator<T>;
+begin
+  result := Enumerator<T>.Create(Impl.GetEnumerator());
+end;
+
+class operator Enumerable<T>.OrderedEnumerable.Implicit(
+  const OrderedEnumerableImpl: NuLib.Functional.Detail.IOrderedEnumerableImpl<T>): OrderedEnumerable;
+begin
+  result.FImpl := OrderedEnumerableImpl;
+end;
+
+function Enumerable<T>.OrderedEnumerable.ThenBy<K>(const KeySelector: Func<T, K>): OrderedEnumerable;
+var
+  orderedImpl: TOrderedEnumerable<T>;
+begin
+  orderedImpl := Impl.Instance as TOrderedEnumerable<T>;
+  orderedImpl.AddOrdering<K>(KeySelector, Comparer<K>.Default, false);
+  result := Self;
+end;
+
+// cannot be implemented due to compiler bug
+//
+//function Enumerable<T>.OrderedEnumerable.Where(const Predicate: Predicate<T>): Enumerable<T>;
+//var
+//  e: Enumerable<T>;
+//begin
+//  e := Impl;
+//  result := e.Where(Predicate);
+//end;
 
 { Functional }
 
@@ -268,5 +302,6 @@ class function Functional.Map<T1, T2, R>(const F: Func<T1, T2, R>; const Source1
 begin
 
 end;
+
 
 end.

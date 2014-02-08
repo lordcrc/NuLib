@@ -15,11 +15,16 @@ type
   end;
 
   IEnumerableImpl<T> = interface
+    function HasCount: boolean;
+    function GetCount: NativeInt;
+
     function GetEnumerator: IEnumeratorImpl<T>;
+
+    property Count: NativeInt read GetCount;
   end;
 
   IOrderedEnumerableImpl<T> = interface(IEnumerableImpl<T>)
-    function Instance: TObject;
+    function Instance: TObject; // necessary hack
   end;
 
 implementation
