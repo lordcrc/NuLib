@@ -121,6 +121,7 @@
         <DCCReference Include="..\src\NuLib.Functional.Detail.Aggregate.pas"/>
         <DCCReference Include="..\src\NuLib.Functional.Detail.Map.pas"/>
         <DCCReference Include="..\src\NuLib.Functional.Detail.OrderedEnumerable.pas"/>
+        <DCCReference Include="..\src\NuLib.Functional.Detail.Slice.pas"/>
         <DCCReference Include="..\src\NuLib.Common.pas"/>
         <DCCReference Include="..\src\NuLib.Detail.pas"/>
         <BuildConfiguration Include="Release">

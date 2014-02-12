@@ -78,6 +78,10 @@ type
 
     function Where(const Predicate: Predicate<T>): Enumerable<T>; inline;
 
+    function Select<R>(const Selector: Func<T, R>): Enumerable<R>; inline;
+
+    function Take(const Count: NativeInt): Enumerable<T>; inline;
+
     function ToArray(): TArray<T>;
 
     ///	<summary>
@@ -147,6 +151,9 @@ type
 
     class function Map<T, R>(const F: Func<T, R>; const Source: Enumerable<T>): Enumerable<R>; overload; static;
     class function Map<T1, T2, R>(const F: Func<T1, T2, R>; const Source1: Enumerable<T1>; const Source2: Enumerable<T2>): Enumerable<R>; overload; static;
+
+    class function Slice<T>(const Source: Enumerable<T>; const Stop: NativeInt): Enumerable<T>; overload; static;
+    class function Slice<T>(const Source: Enumerable<T>; const Start, Stop: NativeInt; const Step: NativeInt = 1): Enumerable<T>; overload; static;
   end;
 
 implementation
@@ -157,7 +164,8 @@ uses
   NuLib.Functional.Detail.OrderedEnumerable,
   NuLib.Functional.Detail.Filter,
   NuLib.Functional.Detail.Map,
-  NuLib.Functional.Detail.Aggregate;
+  NuLib.Functional.Detail.Aggregate,
+  NuLib.Functional.Detail.Slice;
 
 { Enumerator<T> }
 
@@ -208,6 +216,16 @@ function Enumerable<T>.OrderBy<K>(const KeySelector: Func<T, K>): OrderedEnumera
 begin
   result := TOrderedEnumerable<T>.Create(Impl);
   result.ThenBy<K>(KeySelector); // workaround
+end;
+
+function Enumerable<T>.Select<R>(const Selector: Func<T, R>): Enumerable<R>;
+begin
+  result := TMapImpl<T,R>.Create(Impl, Selector);
+end;
+
+function Enumerable<T>.Take(const Count: NativeInt): Enumerable<T>;
+begin
+  result := TSliceEnumerable<T>.Create(Impl, 0, Count, 1);
 end;
 
 function Enumerable<T>.ToArray: TArray<T>;
@@ -303,5 +321,14 @@ begin
 
 end;
 
+class function Functional.Slice<T>(const Source: Enumerable<T>; const Start, Stop, Step: NativeInt): Enumerable<T>;
+begin
+  result := TSliceEnumerable<T>.Create(Source.Impl, Start, Stop, Step);
+end;
+
+class function Functional.Slice<T>(const Source: Enumerable<T>; const Stop: NativeInt): Enumerable<T>;
+begin
+  result := TSliceEnumerable<T>.Create(Source.Impl, 0, Stop, 1);
+end;
 
 end.

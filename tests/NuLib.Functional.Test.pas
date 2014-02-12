@@ -400,16 +400,19 @@ procedure Test7;
 var
   data: TArray<string>;
   src: Enumerable<string>;
-  s: string;
+  i: integer;
   pred: Predicate<string>;
-  res: TArray<string>;
+  selector: Func<string, integer>;
+  res: TArray<integer>;
 begin
   data := nil;
   try
-    SetLength(data, 3);
+    SetLength(data, 5);
     data[0] := 'aaa';
     data[1] := 'bbb';
     data[2] := 'ccc';
+    data[3] := 'ddd';
+    data[4] := 'eee';
 
     src := Enumerable<string>.Wrap(data);
 
@@ -419,10 +422,21 @@ begin
         result := not StartsText('b', s);
       end;
 
-    res := Functional.Filter<string>(pred, src).ToArray();
-    for s in res do
+    selector :=
+      function(const s: string): integer
+      begin
+        result := StrToInt('$' + s);
+      end;
+
+    //res := Functional.Map<string, integer>(selector, Functional.Filter<string>(pred, src)).ToArray();
+    //res := Functional.Map<string, integer>(selector, Functional.Slice<string>(src, 2)).ToArray();
+    //res := src.Where(pred).Select<integer>(selector).ToArray();
+
+    res := src.Where(pred).Take(3).Select<integer>(selector).ToArray();
+
+    for i in res do
     begin
-      WriteLn(s);
+      WriteLn(IntToHex(i, 3));
     end;
   finally
     src := nil;
