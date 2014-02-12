@@ -39,7 +39,7 @@ type
 implementation
 
 uses
-  NuLib.Algorithms;
+  NuLib.Algorithms, NuLib.Functional;
 
 { TOrderedEnumerator<T> }
 
@@ -115,20 +115,9 @@ end;
 
 function TOrderedEnumerable<T>.GetEnumerator: IEnumeratorImpl<T>;
 var
-  i: NativeInt;
-  elm: T;
   elms: TArray<T>;
 begin
-  i := 0;
-
-  for elm in FSrc do
-  begin
-    if i >= Length(elms) then
-      SetLength(elms, Length(elms) + 16);
-    elms[i] := elm;
-    i := i + 1;
-  end;
-  SetLength(elms, i);
+  elms := Enumerable<T>(FSrc).ToArray();
 
   Alg.Sort<T>(elms, FElementComparer);
 
