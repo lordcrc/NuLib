@@ -444,6 +444,43 @@ begin
   end;
 end;
 
+
+procedure Test8;
+var
+  data: TArray<string>;
+  src: Enumerable<string>;
+  t: Tuple<string, integer>;
+  selector: Func<string, integer>;
+  res: TArray<Tuple<string, integer>>;
+begin
+  data := nil;
+  try
+    SetLength(data, 5);
+    data[0] := 'aaa';
+    data[1] := 'bbb';
+    data[2] := 'ccc';
+    data[3] := 'ddd';
+    data[4] := 'eee';
+
+    src := Enumerable<string>.Wrap(data);
+
+    selector :=
+      function(const s: string): integer
+      begin
+        result := StrToInt('$' + s);
+      end;
+
+    res := Functional.Zip<string, integer>(src, src.Select<integer>(selector)).ToArray();
+
+    for t in res do
+    begin
+      WriteLn(t.V1, ' -> ', t.V2);
+    end;
+  finally
+    src := nil;
+    data := nil;
+  end;
+end;
 procedure RunTests;
 begin
   Test1;
@@ -466,6 +503,9 @@ begin
   WriteLn;
 
   Test7;
+  WriteLn;
+
+  Test8;
   WriteLn;
 end;
 

@@ -27,7 +27,7 @@ type
     Value1: T1;
     Value2: T2;
 
-    constructor Create(const V1: T1; const V2: T2);
+    class function Create(const V1: T1; const V2: T2): Pair<T1, T2>; inline; static;
 
     property Key: T1 read value1 write value1;
     property Value: T2 read value2 write value2;
@@ -217,10 +217,10 @@ implementation
 
 { Pair<T1, T2> }
 
-constructor Pair<T1, T2>.Create(const V1: T1; const V2: T2);
+class function Pair<T1, T2>.Create(const V1: T1; const V2: T2): Pair<T1, T2>;
 begin
-  Value1 := V1;
-  Value2 := V2;
+  result.Value1 := V1;
+  result.Value2 := V2;
 end;
 
 { Dictionary<K, V> }

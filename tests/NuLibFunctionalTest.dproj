@@ -112,6 +112,8 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
+        <DCCReference Include="..\src\NuLib.Common.pas"/>
+        <DCCReference Include="..\src\NuLib.Detail.pas"/>
         <DCCReference Include="NuLib.Functional.Test.pas"/>
         <DCCReference Include="..\src\NuLib.Functional.pas"/>
         <DCCReference Include="..\src\NuLib.Functional.Common.pas"/>
@@ -122,8 +124,7 @@
         <DCCReference Include="..\src\NuLib.Functional.Detail.Map.pas"/>
         <DCCReference Include="..\src\NuLib.Functional.Detail.OrderedEnumerable.pas"/>
         <DCCReference Include="..\src\NuLib.Functional.Detail.Slice.pas"/>
-        <DCCReference Include="..\src\NuLib.Common.pas"/>
-        <DCCReference Include="..\src\NuLib.Detail.pas"/>
+        <DCCReference Include="..\src\NuLib.Functional.Detail.Zip.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

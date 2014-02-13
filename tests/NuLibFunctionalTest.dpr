@@ -6,6 +6,8 @@ program NuLibFunctionalTest;
 
 uses
   System.SysUtils,
+  NuLib.Common in '..\src\NuLib.Common.pas',
+  NuLib.Detail in '..\src\NuLib.Detail.pas',
   NuLib.Functional.Test in 'NuLib.Functional.Test.pas',
   NuLib.Functional in '..\src\NuLib.Functional.pas',
   NuLib.Functional.Common in '..\src\NuLib.Functional.Common.pas',
@@ -16,8 +18,7 @@ uses
   NuLib.Functional.Detail.Map in '..\src\NuLib.Functional.Detail.Map.pas',
   NuLib.Functional.Detail.OrderedEnumerable in '..\src\NuLib.Functional.Detail.OrderedEnumerable.pas',
   NuLib.Functional.Detail.Slice in '..\src\NuLib.Functional.Detail.Slice.pas',
-  NuLib.Common in '..\src\NuLib.Common.pas',
-  NuLib.Detail in '..\src\NuLib.Detail.pas';
+  NuLib.Functional.Detail.Zip in '..\src\NuLib.Functional.Detail.Zip.pas';
 
 begin
   try

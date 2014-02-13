@@ -154,6 +154,8 @@ type
 
     class function Slice<T>(const Source: Enumerable<T>; const Stop: NativeInt): Enumerable<T>; overload; static;
     class function Slice<T>(const Source: Enumerable<T>; const Start, Stop: NativeInt; const Step: NativeInt = 1): Enumerable<T>; overload; static;
+
+    class function Zip<T1, T2>(const Source1: Enumerable<T1>; const Source2: Enumerable<T2>): Enumerable<Tuple<T1, T2>>; overload; static;
   end;
 
 implementation
@@ -165,7 +167,8 @@ uses
   NuLib.Functional.Detail.Filter,
   NuLib.Functional.Detail.Map,
   NuLib.Functional.Detail.Aggregate,
-  NuLib.Functional.Detail.Slice;
+  NuLib.Functional.Detail.Slice,
+  NuLib.Functional.Detail.Zip;
 
 { Enumerator<T> }
 
@@ -220,7 +223,7 @@ end;
 
 function Enumerable<T>.Select<R>(const Selector: Func<T, R>): Enumerable<R>;
 begin
-  result := TMapImpl<T,R>.Create(Impl, Selector);
+  result := TMapEnumerable<T,R>.Create(Impl, Selector);
 end;
 
 function Enumerable<T>.Take(const Count: NativeInt): Enumerable<T>;
@@ -263,7 +266,7 @@ end;
 
 function Enumerable<T>.Where(const Predicate: Predicate<T>): Enumerable<T>;
 begin
-  result := TFilterImpl<T>.Create(Impl, Predicate);
+  result := TFilterEnumerable<T>.Create(Impl, Predicate);
 end;
 
 class function Enumerable<T>.Wrap<E>(const EnumerableObj: E): Enumerable<T>;
@@ -307,12 +310,12 @@ end;
 
 class function Functional.Filter<T>(const Predicate: Predicate<T>; const Source: Enumerable<T>): Enumerable<T>;
 begin
-  result := TFilterImpl<T>.Create(Source.Impl, Predicate);
+  result := TFilterEnumerable<T>.Create(Source.Impl, Predicate);
 end;
 
 class function Functional.Map<T, R>(const F: Func<T, R>; const Source: Enumerable<T>): Enumerable<R>;
 begin
-  result := TMapImpl<T, R>.Create(Source.Impl, F);
+  result := TMapEnumerable<T, R>.Create(Source.Impl, F);
 end;
 
 class function Functional.Map<T1, T2, R>(const F: Func<T1, T2, R>; const Source1: Enumerable<T1>;
@@ -324,6 +327,12 @@ end;
 class function Functional.Slice<T>(const Source: Enumerable<T>; const Start, Stop, Step: NativeInt): Enumerable<T>;
 begin
   result := TSliceEnumerable<T>.Create(Source.Impl, Start, Stop, Step);
+end;
+
+class function Functional.Zip<T1, T2>(const Source1: Enumerable<T1>;
+  const Source2: Enumerable<T2>): Enumerable<Tuple<T1, T2>>;
+begin
+  result := TZipEnumerable<T1, T2>.Create(Source1.Impl, Source2.Impl, False);
 end;
 
 class function Functional.Slice<T>(const Source: Enumerable<T>; const Stop: NativeInt): Enumerable<T>;

@@ -7,19 +7,24 @@ uses
   NuLib.Functional.Detail;
 
 type
-  TMapImpl<T, R> = class(TInterfacedObject, IEnumerableImpl<R>, IEnumeratorImpl<R>)
+  TMapEnumerator<T, R> = class(TInterfacedObject, IEnumeratorImpl<R>)
+  private
+    FSrc: IEnumeratorImpl<T>;
+    FFunc: Func<T, R>;
+  public
+    constructor Create(const Src: IEnumeratorImpl<T>; const F: Func<T, R>);
+
+    function GetCurrent: R;
+    function MoveNext: Boolean;
+  end;
+
+  TMapEnumerable<T, R> = class(TInterfacedObject, IEnumerableImpl<R>)
   private
     FSrc: IEnumerableImpl<T>;
-    FSrcEnumerator: IEnumeratorImpl<T>;
     FFunc: Func<T, R>;
   public
     constructor Create(const Src: IEnumerableImpl<T>; const F: Func<T, R>);
 
-    // Enumerator
-    function GetCurrent: R;
-    function MoveNext: Boolean;
-
-    // Enumerable
     function HasCount: boolean;
     function GetCount: NativeInt;
     function GetEnumerator: IEnumeratorImpl<R>;
@@ -27,9 +32,9 @@ type
 
 implementation
 
-{ TMapImpl<T, R> }
+{ TMapEnumerator<T, R> }
 
-constructor TMapImpl<T, R>.Create(const Src: IEnumerableImpl<T>; const F: Func<T, R>);
+constructor TMapEnumerator<T, R>.Create(const Src: IEnumeratorImpl<T>; const F: Func<T, R>);
 begin
   inherited Create;
 
@@ -37,30 +42,42 @@ begin
   FFunc := F;
 end;
 
-function TMapImpl<T, R>.GetCount: NativeInt;
+function TMapEnumerator<T, R>.GetCurrent: R;
+begin
+  result := FFunc(FSrc.Current);
+end;
+
+function TMapEnumerator<T, R>.MoveNext: Boolean;
+begin
+  result := FSrc.MoveNext;
+end;
+
+{ TMapEnumerable<T, R> }
+
+constructor TMapEnumerable<T, R>.Create(const Src: IEnumerableImpl<T>; const F: Func<T, R>);
+begin
+  inherited Create;
+
+  FSrc := Src;
+  FFunc := F;
+end;
+
+function TMapEnumerable<T, R>.GetCount: NativeInt;
 begin
   Assert(False, 'Not implemented');
 end;
 
-function TMapImpl<T, R>.GetCurrent: R;
+function TMapEnumerable<T, R>.GetEnumerator: IEnumeratorImpl<R>;
+var
+  srcEnumerator: IEnumeratorImpl<T>;
 begin
-  result := FFunc(FSrcEnumerator.Current);
+  srcEnumerator := FSrc.GetEnumerator();
+  result := TMapEnumerator<T,R>.Create(srcEnumerator, FFunc);
 end;
 
-function TMapImpl<T, R>.GetEnumerator: IEnumeratorImpl<R>;
-begin
-  FSrcEnumerator := FSrc.GetEnumerator();
-  result := Self;
-end;
-
-function TMapImpl<T, R>.HasCount: boolean;
+function TMapEnumerable<T, R>.HasCount: boolean;
 begin
   result := False;
-end;
-
-function TMapImpl<T, R>.MoveNext: Boolean;
-begin
-  result := FSrcEnumerator.MoveNext;
 end;
 
 end.
