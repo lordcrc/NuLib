@@ -64,7 +64,7 @@ end;
 
 function TMapEnumerable<T, R>.GetCount: NativeInt;
 begin
-  Assert(False, 'Not implemented');
+  result := FSrc.Count;
 end;
 
 function TMapEnumerable<T, R>.GetEnumerator: IEnumeratorImpl<R>;
@@ -77,7 +77,7 @@ end;
 
 function TMapEnumerable<T, R>.HasCount: boolean;
 begin
-  result := False;
+  result := FSrc.HasCount;
 end;
 
 end.

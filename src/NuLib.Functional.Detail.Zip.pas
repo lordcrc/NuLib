@@ -50,6 +50,9 @@ type
 
 implementation
 
+uses
+  System.Math;
+
 { TZipEnumerator<T1, T2> }
 
 constructor TZipEnumerator<T1, T2>.Create(const Src1: IEnumeratorImpl<T1>; const Src2: IEnumeratorImpl<T2>);
@@ -115,7 +118,10 @@ end;
 
 function TZipEnumerable<T1, T2>.GetCount: NativeInt;
 begin
-  Assert(False, 'Not implemented');
+  if FLongest then
+    result := Max(FSrc1.Count, FSrc2.Count)
+  else
+    result := Min(FSrc1.Count, FSrc1.Count);
 end;
 
 function TZipEnumerable<T1, T2>.GetEnumerator: IEnumeratorImpl<Tuple<T1, T2>>;
@@ -134,7 +140,7 @@ end;
 
 function TZipEnumerable<T1, T2>.HasCount: boolean;
 begin
-  result := False;
+  result := FSrc1.HasCount and FSrc2.HasCount;
 end;
 
 end.
